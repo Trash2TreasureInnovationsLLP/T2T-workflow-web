@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>T2T Workflow - Complete UI Encyclopedia & Button Reference Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  @page {
+    size: A4;
+    margin: 18mm 14mm 18mm 14mm;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    line-height: 1.55;
+    font-size: 12px;
+    background: #ffffff;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #059669;
+    border-bottom: 2px solid #059669;
+    padding-bottom: 6px;
+    margin-top: 28px;
+    page-break-before: always;
+  }
+  h1:first-of-type {
+    page-break-before: avoid;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-top: 22px;
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 16px;
+  }
+  h4 {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 12px;
+  }
+  p, li {
+    color: #334155;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 18px 0;
+    font-size: 10.5px;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f1f5f9;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    color: #0f766e;
+  }
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 10px;
+  }
+  blockquote {
+    border-left: 4px solid #10b981;
+    padding-left: 12px;
+    margin-left: 0;
+    color: #475569;
+    background: #f0fdf4;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+  }
+</style>
+</head>
+<body>
+<h1>Trash2Treasure Innovations LLP (T2T)</h1>
+<h1>Complete UI &amp; Feature Encyclopedia: Page-by-Page, Button-by-Button Guide</h1>
+<p><strong>Target Platform:</strong> <a href="https://t2t-workflow.vercel.app">https://t2t-workflow.vercel.app</a><br><strong>Document Type:</strong> Comprehensive Screen &amp; Interaction Dictionary<br><strong>Target Audience:</strong> Super Admin (Executive Leadership) &amp; Employees/Interns (Contributors)  </p>
+<hr>
+<h1>📑 Master Table of Contents</h1>
+<ol>
+<li><a href="#1-global-header--navigation-shell">Global Header &amp; Navigation Shell</a></li>
+<li><a href="#2-authentication-login--forced-password-change">Authentication: Login &amp; Forced Password Change</a></li>
+<li><a href="#3-page-1-executive-dashboard-dashboard">Page 1: Executive Dashboard (<code>/dashboard</code>)</a></li>
+<li><a href="#4-page-2-3-stage-work-overview-work-overview">Page 2: 3-Stage Work Overview (<code>/work-overview</code>)</a></li>
+<li><a href="#5-page-3-personal-workspace--my-work-my-work">Page 3: Personal Workspace — &quot;My Work&quot; (<code>/my-work</code>)</a></li>
+<li><a href="#6-page-4-drag-and-drop-agile-kanban-board-kanban">Page 4: Drag-and-Drop Agile Kanban Board (<code>/kanban</code>)</a></li>
+<li><a href="#7-page-5-task-management-hub-tasks">Page 5: Task Management Hub (<code>/tasks</code>)</a></li>
+<li><a href="#8-page-6-agile-sprint-hub--backlog-planning-agile">Page 6: Agile Sprint Hub &amp; Backlog Planning (<code>/agile</code>)</a></li>
+<li><a href="#9-page-7-projects-portfolio--detail-view-projects">Page 7: Projects Portfolio &amp; Detail View (<code>/projects</code>)</a></li>
+<li><a href="#10-page-8-team-performance--workload-capacity-performance">Page 8: Team Performance &amp; Workload Capacity (<code>/performance</code>)</a></li>
+<li><a href="#11-page-9-operational-analytics-analytics">Page 9: Operational Analytics (<code>/analytics</code>)</a></li>
+<li><a href="#12-page-10-operations-calendar-calendar">Page 10: Operations Calendar (<code>/calendar</code>)</a></li>
+<li><a href="#13-page-11-team-members-hub-users">Page 11: Team Members Hub (<code>/users</code>)</a></li>
+<li><a href="#14-page-12-compliance-audit-logs-audit-logs">Page 12: Compliance Audit Logs (<code>/audit-logs</code>)</a></li>
+<li><a href="#15-page-13-company-document-vault-documents">Page 13: Company Document Vault (<code>/documents</code>)</a></li>
+<li><a href="#16-page-14-announcements-broadcast-announcements">Page 14: Announcements Broadcast (<code>/announcements</code>)</a></li>
+<li><a href="#17-page-15-organization--account-settings-settings">Page 15: Organization &amp; Account Settings (<code>/settings</code>)</a></li>
+</ol>
+<hr>
+<h1>1. Global Header &amp; Navigation Shell</h1>
+<p>The Navigation Shell wraps every page in the application.</p>
+<h3>UI Elements &amp; Controls</h3>
+<table>
+<thead>
+<tr>
+<th align="left">Element</th>
+<th align="left">Location</th>
+<th align="left">Purpose &amp; Meaning</th>
+<th align="left">What Happens When Clicked</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>T2T Logo &amp; Brand Name</strong></td>
+<td align="left">Top-left of header / Sidebar top</td>
+<td align="left">Identifies the official organization (<em>Trash2Treasure Innovations LLP</em>).</td>
+<td align="left">Navigates directly back to <code>/dashboard</code> (for Admins) or <code>/my-work</code> (for Employees).</td>
+</tr>
+<tr>
+<td align="left"><strong>Sidebar Menu Links</strong></td>
+<td align="left">Left sidebar</td>
+<td align="left">Primary navigation menu for the 14 core modules.</td>
+<td align="left">Highlights the active page with green pill styling and smoothly switches routes.</td>
+</tr>
+<tr>
+<td align="left"><strong>Global Search Bar (<code>Ctrl + K</code>)</strong></td>
+<td align="left">Header center</td>
+<td align="left">Instant command palette to find any Task (by title or ID like <code>T2T-1001</code>), Project, or Team Member.</td>
+<td align="left">Opens the Command Palette modal overlay. Typing searches the database in real-time. Pressing <code>Enter</code> jumps directly to that project or task.</td>
+</tr>
+<tr>
+<td align="left"><strong>Notification Bell Icon</strong></td>
+<td align="left">Header top-right</td>
+<td align="left">Alert center for task assignments, blocker notifications, and mentions.</td>
+<td align="left">Opens a dropdown showing the 5 most recent unread alerts. Has a <code>&quot;Mark all as read&quot;</code> button and a link to <code>/notifications</code>.</td>
+</tr>
+<tr>
+<td align="left"><strong>User Profile Badge</strong></td>
+<td align="left">Header top-right</td>
+<td align="left">Shows current logged-in user&#39;s initials (e.g. <code>VK</code>), Full Name, and Role badge.</td>
+<td align="left">Opens the user profile menu with quick links to: <br>1. <em>My Profile / Settings</em> (<code>/settings</code>)<br>2. <em>Sign Out</em> button (clears HttpOnly cookie and returns to <code>/login</code>).</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>2. Authentication: Login &amp; Forced Password Change</h1>
+<h3>2.1 Login Page (<code>/login</code>)</h3>
+<p><strong>Purpose:</strong> Secure single-entry portal for all company personnel. Eliminates demo buttons to enforce strict production credential validation.</p>
+<ul>
+<li><strong>Email or Employee ID Field</strong>:<ul>
+<li>Accepts either your corporate email (<code>vishnu@trash2treasure.com</code>) <strong>OR</strong> your sequential Employee ID (<code>T2T-001</code>).</li>
+</ul>
+</li>
+<li><strong>Password Field</strong>:<ul>
+<li>Masked input with a reveal toggle eye icon to check typed characters.</li>
+</ul>
+</li>
+<li><strong>&quot;Sign In to Workspace&quot; Button</strong>:<ul>
+<li>Sends a secure <code>POST /api/auth/login</code> request.</li>
+<li>Verifies credentials against Bcrypt hashes in the database.</li>
+<li>Issues an encrypted HttpOnly JWT cookie (<code>t2t_session_token</code>).</li>
+<li>Automatically redirects Super Admin/Executives to <code>/dashboard</code> and Employees/Interns to <code>/my-work</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>2.2 Forced Password Change (<code>/change-password</code>)</h3>
+<p><strong>Purpose:</strong> Protects newly provisioned accounts so only the employee knows their permanent password.</p>
+<ul>
+<li><strong>Trigger:</strong> If <code>mustChangePassword === true</code> (automatically set when an Admin creates a new user), the system blocks access to all dashboard pages until this form is completed.</li>
+<li><strong>New Password &amp; Confirm Password Fields</strong>:<ul>
+<li>Validates that the password meets security requirements (min 8 characters) and matches.</li>
+</ul>
+</li>
+<li><strong>&quot;Activate Account &amp; Save Password&quot; Button</strong>:<ul>
+<li>Hashes the new password, updates the user record, sets <code>mustChangePassword = false</code>, and immediately logs the user into their workspace.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>3. Page 1: Executive Dashboard (<code>/dashboard</code>)</h1>
+<p><strong>Purpose:</strong> Executive mission-control for Super Admin (CEO), COO, and Department Heads. Aggregates company performance, active sprint momentum, blocked items, and urgent risks in real-time.</p>
+<pre><code>+-----------------------------------------------------------------------------------+
+|  [Total Team: 11]    [Active Projects: 3]    [In Progress: 6]    [Overdue/Blocked: 2] |
++-----------------------------------------------------------------------------------+
+|  [ACTIVE SPRINT HEALTH: Sprint 3 (68%)]        |  [DYNAMIC HEALTH SCORE: 85/100]  |
++-----------------------------------------------------------------------------------+
+|  [IMMEDIATE ACTION CENTER: Flagged Blockers]   |  [LIVE AUDIT TRAIL: Who &amp; What]  |
++-----------------------------------------------------------------------------------+
+</code></pre>
+<h3>Every Card &amp; Section Explained</h3>
+<ol>
+<li><p><strong>Top KPI Summary Cards (4 Cards)</strong>:</p>
+<ul>
+<li><strong>Total Team Members</strong>: Live headcount. <em>Clicking takes you to <code>/users</code>.</em></li>
+<li><strong>Active Projects</strong>: Total projects with status <code>ACTIVE</code>. <em>Clicking takes you to <code>/projects</code>.</em></li>
+<li><strong>Tasks In Progress</strong>: Total workload currently being executed across all sprints. <em>Clicking takes you to <code>/kanban</code>.</em></li>
+<li><strong>Overdue &amp; Blocked</strong>: Tasks past their deadline or flagged with an obstacle. Rendered in rose/red to alert leadership. <em>Clicking filters <code>/tasks</code> for urgent resolution.</em></li>
+</ul>
+</li>
+<li><p><strong>Active Sprint Health Widget</strong>:</p>
+<ul>
+<li><strong>Committed Points</strong>: Story points promised for the current 2-week cycle (e.g. <code>45 pts</code>).</li>
+<li><strong>Completed Points</strong>: Points delivered so far (e.g. <code>31 pts</code>).</li>
+<li><strong>Remaining Days</strong>: Countdown to sprint review.</li>
+<li><strong>Progress Bar</strong>: Visual execution velocity percentage.</li>
+</ul>
+</li>
+<li><p><strong>Dynamic Organization Health Score (0 - 100)</strong>:</p>
+<ul>
+<li><strong>Algorithm</strong>:<ul>
+<li>Base score = <code>100</code>.</li>
+<li>Deducts points for open blockers (5 pts per blocker).</li>
+<li>Deducts points for overdue tasks (3 pts per overdue task).</li>
+<li>Adds points proportionally for completed sprint velocity.</li>
+</ul>
+</li>
+<li><strong>Status Badges</strong>: <code>EXCELLENT</code> (85-100), <code>HEALTHY</code> (70-84), <code>NEEDS ATTENTION</code> (&lt;70).</li>
+</ul>
+</li>
+<li><p><strong>Immediate Action Center (Urgent Blocker Escalations)</strong>:</p>
+<ul>
+<li>Lists tasks where an employee clicked &quot;Flag Blocker&quot;.</li>
+<li>Shows: Task ID, Task Title, Assignee, and the <strong>Blocker Reason</strong> (e.g., <em>&quot;Waiting for vendor IoT firmware&quot;</em>).</li>
+<li><strong>&quot;Resolve / Inspect&quot; Button</strong>: Opens the task to contact the assignee, reassign the task, or log an unblock note.</li>
+</ul>
+</li>
+<li><p><strong>Live Organizational Audit Feed</strong>:</p>
+<ul>
+<li>Real-time stream of what is happening inside T2T right now (e.g., <em>&quot;Aarav Patel moved T2T-1004 to IN_REVIEW&quot;</em>).</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1>4. Page 2: 3-Stage Work Overview (<code>/work-overview</code>)</h1>
+<p><strong>Purpose:</strong> Answers the three most fundamental stakeholder questions without digging through spreadsheets:</p>
+<ol>
+<li><em>What did we complete?</em> (Past)</li>
+<li><em>What are we working on right now?</em> (Current)</li>
+<li><em>What are we building next?</em> (Future)</li>
+</ol>
+<h3>The 3 Columns Explained</h3>
+<pre><code>+---------------------------+---------------------------+---------------------------+
+|      1. PAST WORK         |     2. CURRENT WORK       |      3. FUTURE WORK       |
+| (Completed Deliverables)  |    (In-Flight Execution)  |    (Roadmap &amp; Next Up)    |
++---------------------------+---------------------------+---------------------------+
+</code></pre>
+<ol>
+<li><p><strong>Past Work (Completed Deliverables)</strong>:</p>
+<ul>
+<li>Lists tasks with status <code>COMPLETED</code>.</li>
+<li>Displays: Task code, title, project name, delivered story points, and completion date.</li>
+<li><strong>&quot;View Milestone&quot; Button</strong>: Shows which project milestone this deliverable unlocked.</li>
+</ul>
+</li>
+<li><p><strong>Current Work (Active Initiatives)</strong>:</p>
+<ul>
+<li>Lists all tasks in <code>IN_PROGRESS</code> or <code>IN_REVIEW</code>.</li>
+<li>Shows: Assignee avatar, priority pill (<code>URGENT</code>, <code>HIGH</code>), and days remaining until due date.</li>
+<li>Highlights any task that has a raised blocker in red background.</li>
+</ul>
+</li>
+<li><p><strong>Future Work (Strategic Roadmap &amp; Upcoming)</strong>:</p>
+<ul>
+<li>Lists tasks in <code>TODO</code> or <code>BACKLOG</code> scheduled for upcoming sprint cycles.</li>
+<li>Shows: Planned story points, target start date, and required skills.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1>5. Page 3: Personal Workspace — &quot;My Work&quot; (<code>/my-work</code>)</h1>
+<p><strong>Purpose:</strong> The daily home page for Employees, Developers, and Interns. Filters out company-wide noise to focus strictly on: <em>&quot;What must I deliver today?&quot;</em> and <em>&quot;What have I accomplished?&quot;</em></p>
+<h3>Header Banner</h3>
+<ul>
+<li>Shows the employee&#39;s Monogram Avatar, Full Name, Designation, Department, and Employee ID (e.g., <code>T2T-007</code>).</li>
+</ul>
+<h3>Interactive Quick Stat Counters (Clickable)</h3>
+<ul>
+<li><strong>Completed Badge (Green)</strong>: Shows total tasks you&#39;ve finished. <strong>Clicking it switches directly to the &quot;Work History &amp; Delivered&quot; tab.</strong></li>
+<li><strong>In Progress Badge (Sky Blue)</strong>: Shows tasks you are actively working on. <strong>Clicking it switches to the &quot;Active Workspace&quot; tab.</strong></li>
+<li><strong>To Do Badge (Amber)</strong>: Shows tasks waiting in your personal queue.</li>
+</ul>
+<h3>Overdue Alert Banner (Conditional)</h3>
+<ul>
+<li>Appears only if you have tasks whose <code>dueDate &lt; today</code>.</li>
+<li>Warns you to either finish the task, update the deadline, or flag a blocker.</li>
+</ul>
+<h3>The Two Tabs Explained</h3>
+<h4>Tab A: &quot;Active Workspace&quot;</h4>
+<p>Shows 3 organized task lists:</p>
+<ol>
+<li><p><strong>Currently In Progress</strong>:</p>
+<ul>
+<li>Tasks you are currently developing or executing.</li>
+<li><strong>Button 1: &quot;Flag Blocker&quot; (Rose Button)</strong>:<ul>
+<li>Opens the Blocker Dialog. Enter the reason you are stuck (e.g., <em>&quot;Need AWS S3 upload bucket permissions&quot;</em>).</li>
+<li>Clicking <strong>&quot;Confirm Blocker&quot;</strong> moves the task to <code>BLOCKED</code>, turns it red, and alerts Super Admin on the Executive Dashboard.</li>
+</ul>
+</li>
+<li><strong>Button 2: &quot;Submit Review&quot; (Purple Button)</strong>:<ul>
+<li>Moves task status to <code>IN_REVIEW</code>. Notifies tech leads or managers that work is ready for code review or QA verification.</li>
+</ul>
+</li>
+<li><strong>Button 3: &quot;Complete&quot; (Emerald Button with Checkmark)</strong>:<ul>
+<li>Instantly marks the task <code>COMPLETED</code>. Updates sprint burn-down and moves the card to your Work History.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Tasks Blocked (If Any)</strong>:</p>
+<ul>
+<li>Shows any tasks currently paused due to dependencies.</li>
+<li>Shows the blocker reason clearly in a tinted box.</li>
+<li><strong>Button: &quot;Unblock &amp; Resume Work&quot; (Green Button)</strong>:<ul>
+<li>Clears the blocker text, resets status back to <code>IN_PROGRESS</code>, and resumes active tracking.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Next In Queue (To Do)</strong>:</p>
+<ul>
+<li>Tasks assigned to you that haven&#39;t been started yet.</li>
+<li>Shows: Task ID, Title, Project, Story points, and Due Date.</li>
+<li><strong>Button: &quot;Start Working&quot; (Green Play Icon)</strong>:<ul>
+<li>Moves the task from <code>TODO</code> to <code>IN_PROGRESS</code> with one click. Automatically sets the current start timestamp.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h4>Tab B: &quot;Work History &amp; Delivered Work&quot;</h4>
+<p>Your permanent record of delivered value at T2T:</p>
+<ol>
+<li><strong>Metrics Header</strong>:<ul>
+<li><strong>Delivered Work</strong>: Total completed tasks count.</li>
+<li><strong>Story Points Shipped</strong>: Total points delivered (e.g. <code>24 pts</code>).</li>
+<li><strong>Effort Contributed</strong>: Total logged hours (e.g. <code>42 hrs</code>).</li>
+</ul>
+</li>
+<li><strong>Search Bar</strong>: Instant real-time search across your completed deliverables by task title or task ID.</li>
+<li><strong>Project Filter Dropdown</strong>: Filter your history by a specific project (e.g., <em>Smart Waste Bin IoT</em>).</li>
+<li><strong>Deliverable Cards</strong>:<ul>
+<li>Displays: Title, task ID code, <code>COMPLETED</code> green badge, project name, sprint name, points, and completion date.</li>
+<li><strong>Button 1: &quot;Inspect Details&quot; (Gray File Button)</strong>:<ul>
+<li>Opens the <strong>Deliverable Inspection Modal</strong>.</li>
+<li>Displays full requirements scope, original description, estimated vs. actual effort hours, and full discussion/comment log.</li>
+</ul>
+</li>
+<li><strong>Button 2: &quot;Reopen&quot; (Amber Rotate Button)</strong>:<ul>
+<li>If a task requires rework or QA found an issue, clicking <strong>Reopen</strong> moves it back to <code>IN_PROGRESS</code>.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1>6. Page 4: Drag-and-Drop Agile Kanban Board (<code>/kanban</code>)</h1>
+<p><strong>Purpose:</strong> Visual workflow management representing sprint tasks moving through production stages.</p>
+<h3>The 6 Pipeline Columns</h3>
+<table>
+<thead>
+<tr>
+<th align="left">Column</th>
+<th align="left">Stage Definition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>BACKLOG</code></strong></td>
+<td align="left">Requirements gathered, waiting to be scheduled into a sprint.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>TODO</code></strong></td>
+<td align="left">Committed to the current sprint; ready for an engineer to pick up.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>IN_PROGRESS</code></strong></td>
+<td align="left">Active engineering, testing, or operational execution.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>IN_REVIEW</code></strong></td>
+<td align="left">Pull Request open, QA verification, or manager review.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>BLOCKED</code></strong></td>
+<td align="left">Work halted due to an external impediment or missing resource.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>COMPLETED</code></strong></td>
+<td align="left">Done, tested, delivered, and accepted.</td>
+</tr>
+</tbody></table>
+<h3>Interactive Actions</h3>
+<ul>
+<li><strong>Drag-and-Drop</strong>: Grab any task card by holding the mouse and drop it into another column.<ul>
+<li>Automatically triggers <code>PATCH /api/tasks/[id]</code>.</li>
+<li>Saves the new status in SQLite/PostgreSQL with optimistic UI (updates instantly without flickering).</li>
+</ul>
+</li>
+<li><strong>Filter Toolbar</strong>:<ul>
+<li><strong>Project Filter</strong>: View Kanban for all projects or a single initiative.</li>
+<li><strong>Sprint Filter</strong>: Switch between active sprint and future sprints.</li>
+<li><strong>Assignee Filter</strong>: Filter cards assigned to a specific team member.</li>
+<li><strong>Priority Filter</strong>: View only <code>URGENT</code> or <code>HIGH</code> cards.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>7. Page 5: Task Management Hub (<code>/tasks</code>)</h1>
+<p><strong>Purpose:</strong> Enterprise-grade master table for querying, sorting, creating, and inspecting all organization tasks.</p>
+<h3>Controls &amp; Buttons</h3>
+<ul>
+<li><strong>Search Input</strong>: Live filter across task titles, descriptions, and IDs (<code>T2T-1001</code>).</li>
+<li><strong>Status &amp; Priority Dropdowns</strong>: Narrow down tasks by execution state or urgency.</li>
+<li><strong>Button: &quot;+ Create Task&quot; (Super Admin &amp; Managers)</strong>:<ul>
+<li>Opens the <strong>Create Task Modal</strong>:<ul>
+<li><strong>Title &amp; Description</strong>: Detailed requirements or acceptance criteria.</li>
+<li><strong>Project &amp; Sprint</strong>: Link task to an existing project and sprint.</li>
+<li><strong>Assignee</strong>: Assign to an employee or intern.</li>
+<li><strong>Priority</strong>: <code>LOW</code>, <code>MEDIUM</code>, <code>HIGH</code>, or <code>URGENT</code>.</li>
+<li><strong>Story Points</strong>: Select Fibonacci points (<code>1, 2, 3, 5, 8, 13</code>).</li>
+<li><strong>Estimated Hours</strong>: Expected time commitment (e.g. <code>12 hrs</code>).</li>
+</ul>
+</li>
+<li><strong>Auto Task ID</strong>: Automatically generates the next sequential ID (e.g. <code>T2T-1020</code>).</li>
+</ul>
+</li>
+<li><strong>Task Table Columns</strong>:<ul>
+<li>Task ID, Title, Project, Assignee Avatar, Priority Badge, Status Badge, Due Date, and Actions.</li>
+</ul>
+</li>
+<li><strong>Task Detail &amp; Discussion Modal (Clicking any Task)</strong>:<ul>
+<li>View full task metadata.</li>
+<li><strong>Live Discussion Box</strong>: Write a comment or status update and click <strong>&quot;Post Comment&quot;</strong>.</li>
+<li>Comments are date-stamped and show the author&#39;s avatar.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>8. Page 6: Agile Sprint Hub &amp; Backlog Planning (<code>/agile</code>)</h1>
+<p><strong>Purpose:</strong> For Scrum Masters, CTO, COO, and Super Admin to plan 2-week iterations, manage backlog velocity, and conduct retrospectives.</p>
+<h3>Controls &amp; Sections</h3>
+<ul>
+<li><strong>Active Sprint Overview</strong>:<ul>
+<li>Sprint Goal, Start Date, End Date, Committed Points vs Completed Points.</li>
+</ul>
+</li>
+<li><strong>Button: &quot;+ Plan New Sprint&quot;</strong>:<ul>
+<li>Opens modal to define Sprint Name (e.g., <em>Sprint 4 - Battery Pack Enclosure</em>), date ranges, and overarching goal.</li>
+</ul>
+</li>
+<li><strong>Backlog Grooming List</strong>:<ul>
+<li>Drag or assign unassigned backlog tasks into the newly created sprint.</li>
+</ul>
+</li>
+<li><strong>Sprint Retrospective Section</strong>:<ul>
+<li>Record team feedback at the end of each cycle:<ul>
+<li><em>What went well?</em></li>
+<li><em>What went wrong / bottlenecks?</em></li>
+<li><em>Action items for next sprint.</em></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>9. Page 7: Projects Portfolio &amp; Detail View (<code>/projects</code>)</h1>
+<p><strong>Purpose:</strong> Comprehensive directory of company initiatives (e.g., <em>Smart Waste Segregation IoT</em>, <em>Material Recovery Logistics</em>, <em>Circular Marketplace</em>).</p>
+<h3>Controls &amp; Cards</h3>
+<ul>
+<li><strong>Project Cards</strong>:<ul>
+<li>Displays Project Code (e.g. <code>T2T-PRJ-01</code>), Title, Status Badge (<code>ACTIVE</code>, <code>PLANNING</code>, <code>COMPLETED</code>), Assigned Manager, Budget, and <strong>Progress Bar (% completed based on finished tasks)</strong>.</li>
+</ul>
+</li>
+<li><strong>Button: &quot;+ Create Project&quot; (Admin Only)</strong>:<ul>
+<li>Form: Project Title, Code, Description, Manager, Budget, Start/End Dates.</li>
+</ul>
+</li>
+<li><strong>Project Detail Page (<code>/projects/[id]</code>)</strong>:<ul>
+<li><strong>Tab 1: Overview &amp; Milestones</strong>: Phase checklist with progress checkboxes.</li>
+<li><strong>Tab 2: Team Roster</strong>: All developers and leads assigned to this project.</li>
+<li><strong>Tab 3: Linked Sprints</strong>: All sprints executing deliverables for this project.</li>
+<li><strong>Tab 4: Documents</strong>: Specifications, CAD files, and architecture diagrams.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>10. Page 8: Team Performance &amp; Workload Capacity (<code>/performance</code>)</h1>
+<p><strong>Purpose:</strong> Promotes healthy, balanced team productivity by monitoring workload capacity without toxic stack rankings.</p>
+<h3>Indicators &amp; Metrics</h3>
+<ul>
+<li><strong>Workload Capacity States</strong>:<ul>
+<li>🟢 <strong><code>BALANCED</code></strong>: Contributor has 1-4 active tasks (sustainable flow).</li>
+<li>🟡 <strong><code>ELEVATED</code></strong>: Contributor has 5-7 active tasks (approaching capacity).</li>
+<li>🔴 <strong><code>CAPACITY WARNING</code></strong>: Contributor has 8+ active tasks or multiple overdue deadlines (prompts manager to reassign tasks).</li>
+</ul>
+</li>
+<li><strong>Contribution Matrix Table</strong>:<ul>
+<li>Member Name, Role, Department, Active Tasks, Completed Tasks, Story Points Delivered, and Logged Hours.</li>
+</ul>
+</li>
+<li><strong>Department Filter Dropdown</strong>: Filter performance metrics by Tech, Operations, Marketing, or Finance.</li>
+</ul>
+<hr>
+<h1>11. Page 9: Operational Analytics (<code>/analytics</code>)</h1>
+<p><strong>Purpose:</strong> Visual business intelligence for executive decision-making.</p>
+<h3>Charts &amp; Graphs (Powered by Recharts)</h3>
+<ol>
+<li><strong>Sprint Velocity Chart (Bar Chart)</strong>:<ul>
+<li>Compares <strong>Planned Story Points</strong> vs. <strong>Delivered Story Points</strong> across historical sprints.</li>
+</ul>
+</li>
+<li><strong>Task Status Distribution (Donut / Pie Chart)</strong>:<ul>
+<li>Visual percentage split between <code>TODO</code>, <code>IN_PROGRESS</code>, <code>IN_REVIEW</code>, <code>BLOCKED</code>, and <code>COMPLETED</code>.</li>
+</ul>
+</li>
+<li><strong>Team Workload Allocation (Horizontal Bar Chart)</strong>:<ul>
+<li>Displays task distribution across team members to identify underutilized or overburdened staff.</li>
+</ul>
+</li>
+<li><strong>Department Output Velocity</strong>:<ul>
+<li>Measures delivery throughput by department (Engineering vs Logistics vs Marketing).</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1>12. Page 10: Operations Calendar (<code>/calendar</code>)</h1>
+<p><strong>Purpose:</strong> Master schedule synchronizing company deadlines, project milestones, and sprint cycles.</p>
+<h3>Controls &amp; Views</h3>
+<ul>
+<li><strong>View Selectors</strong>: Switch between <strong>Month</strong>, <strong>Week</strong>, and <strong>Day</strong> views.</li>
+<li><strong>Calendar Grid</strong>:<ul>
+<li>Task due dates appear as colored pills (Urgent = Red, High = Amber, Normal = Blue).</li>
+<li>Sprint milestones appear as green highlight bands.</li>
+</ul>
+</li>
+<li><strong>Interactive Click</strong>: Clicking any calendar pill opens the task details modal for immediate review.</li>
+</ul>
+<hr>
+<h1>13. Page 11: Team Members Hub (<code>/users</code>)</h1>
+<p><strong>Purpose:</strong> Super Admin exclusive administrative dashboard for employee lifecycle and access control.</p>
+<pre><code>+-----------------------------------------------------------------------------------+
+|  [Search Members...]   [Filter by Role]   [Filter by Dept]   [+ PROVISION MEMBER] |
++-----------------------------------------------------------------------------------+
+|  AVATAR  |  NAME &amp; EMAIL  |  EMP ID  |  ROLE  |  DEPT  |  STATUS  |  ACTIONS      |
++-----------------------------------------------------------------------------------+
+</code></pre>
+<h3>Controls &amp; Actions</h3>
+<ul>
+<li><strong>Button: &quot;+ Provision Member&quot; (Green Button Top-Right)</strong>:<ul>
+<li>Form to onboard a new employee or intern:<ul>
+<li>Corporate Email (<code>name@trash2treasure.co.in</code>).</li>
+<li>Full Name.</li>
+<li>Role (<code>EMPLOYEE</code>, <code>INTERN</code>, <code>COO</code>, <code>CTO</code>, <code>CFO</code>, <code>CMO</code>, <code>CAO</code>, <code>SUPER_ADMIN</code>).</li>
+<li>Department &amp; Designation.</li>
+<li>Temporary Password (defaults to <code>T2T@Password2026!</code>).</li>
+</ul>
+</li>
+<li>Automatically assigns the next sequential Employee ID: <code>T2T-001</code>, <code>T2T-002</code>, <code>T2T-013</code>...</li>
+<li>Flags account with <code>mustChangePassword = true</code>.</li>
+</ul>
+</li>
+<li><strong>Member Table Columns</strong>:<ul>
+<li><strong>Avatar</strong>: Monogram initials circle (<code>VK</code>, <code>SN</code>) or logo.</li>
+<li><strong>Name &amp; Email</strong>: User details.</li>
+<li><strong>Employee ID</strong>: Universal code (<code>T2T-xxx</code>).</li>
+<li><strong>Role Badge</strong>: Color-coded role indicator.</li>
+<li><strong>Status Badge</strong>: <code>ACTIVE</code> (Green), <code>INACTIVE</code> (Gray), <code>SUSPENDED</code> (Red).</li>
+</ul>
+</li>
+<li><strong>Actions Menu per Member</strong>:<ul>
+<li><strong>&quot;Edit Details&quot;</strong>: Reassign department, designation, or reporting manager.</li>
+<li><strong>&quot;Toggle Status&quot;</strong>: Suspend or deactivate an account with one click (instantly terminates their active sessions).</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>14. Page 12: Compliance Audit Logs (<code>/audit-logs</code>)</h1>
+<p><strong>Purpose:</strong> Immutable compliance ledger for tracking every critical action taken across the company.</p>
+<h3>Table Columns</h3>
+<ul>
+<li><strong>Timestamp</strong>: Date and exact time of the action (in <code>Asia/Kolkata</code> time).</li>
+<li><strong>Actor / User</strong>: Full name, avatar, and role of the person who took the action.</li>
+<li><strong>Action Type</strong>:<ul>
+<li><code>USER_LOGIN</code>: Session authenticated.</li>
+<li><code>TASK_CREATED</code>: New task added to system.</li>
+<li><code>TASK_STATUS_CHANGED</code>: Task moved across Kanban or completed.</li>
+<li><code>BLOCKER_FLAGGED</code>: Blocker raised.</li>
+<li><code>PASSWORD_CHANGED</code>: Security credential updated.</li>
+</ul>
+</li>
+<li><strong>Object</strong>: Target project, task ID, or user modified.</li>
+<li><strong>Details</strong>: Specific payload changes (e.g. <em>Changed status from TODO to IN_PROGRESS</em>).</li>
+</ul>
+<hr>
+<h1>15. Page 13: Company Document Vault (<code>/documents</code>)</h1>
+<p><strong>Purpose:</strong> Central knowledge base and document repository for company intellectual property.</p>
+<h3>Controls &amp; Vault Folders</h3>
+<ul>
+<li><strong>Categories</strong>:<ul>
+<li>📁 <strong>Technical Specs</strong>: Circuit schematics, IoT firmware documentation, API specs.</li>
+<li>📁 <strong>Client &amp; Vendor Contracts</strong>: Circular economy partner agreements and vendor contracts.</li>
+<li>📁 <strong>Research &amp; Whitepapers</strong>: Plastic pyrolysis research, material recovery feasibility studies.</li>
+<li>📁 <strong>Proposals &amp; Grants</strong>: Government grant applications and investor decks.</li>
+</ul>
+</li>
+<li><strong>Button: &quot;+ Upload Document&quot;</strong>:<ul>
+<li>Upload file (PDF, DOCX, ZIP, PNG) directly stored in Supabase Cloud Storage (<code>t2t-assets</code> bucket).</li>
+<li>Assign confidentiality tier: <code>COMPANY_WIDE</code>, <code>MANAGEMENT_ONLY</code>, or <code>CONFIDENTIAL</code>.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>16. Page 14: Announcements Broadcast (<code>/announcements</code>)</h1>
+<p><strong>Purpose:</strong> Company-wide notice board for leadership broadcasts.</p>
+<h3>Controls &amp; Cards</h3>
+<ul>
+<li><strong>Announcement Cards</strong>:<ul>
+<li>Shows Title, Content, Published Date, and Author (e.g. <em>Vishnu (CEO)</em>).</li>
+<li>Priority Badge: <code>NORMAL</code>, <code>IMPORTANT</code>, or <code>CRITICAL</code>.</li>
+</ul>
+</li>
+<li><strong>Pinned Announcements</strong>: Critical announcements pin to the top of everyone&#39;s dashboard until acknowledged.</li>
+<li><strong>Button: &quot;+ Post Announcement&quot; (Super Admin &amp; Executives Only)</strong>:<ul>
+<li>Form to draft an announcement, attach a priority flag, and broadcast immediately to all team members.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>17. Page 15: Organization &amp; Account Settings (<code>/settings</code>)</h1>
+<p><strong>Purpose:</strong> System configuration and personal credential management.</p>
+<h3>Sections &amp; Buttons</h3>
+<ol>
+<li><strong>Organization Profile (Super Admin Only)</strong>:<ul>
+<li><strong>Company Legal Name</strong>: <code>Trash2Treasure Innovations LLP</code></li>
+<li><strong>Tagline</strong>: <code>Internal Operations &amp; Agile Work Management</code></li>
+<li><strong>Official Email</strong>: <code>info@trash2treasure.co.in</code></li>
+<li><strong>Headquarters Location</strong>: Registered corporate office address.</li>
+<li><strong>Button: &quot;Save Organization Profile&quot;</strong>: Commits updates to database.</li>
+</ul>
+</li>
+<li><strong>Operational Schedule Settings</strong>:<ul>
+<li>Standard working days (Monday - Friday / Saturday).</li>
+<li>Standard Sprint Cycle Duration (Default: 2 weeks).</li>
+<li>Default Timezone (<code>Asia/Kolkata</code>).</li>
+</ul>
+</li>
+<li><strong>Personal Account Security (All Users)</strong>:<ul>
+<li>Update your personal password. Requires entering current password and new password twice.</li>
+<li><strong>Button: &quot;Update Password&quot;</strong>: Securely hashes new password with Bcrypt and saves.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1>📊 Quick Reference: Actions by Role</h1>
+<table>
+<thead>
+<tr>
+<th align="left">Task</th>
+<th align="left">Super Admin (CEO)</th>
+<th align="left">Employee / Intern</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Log into platform</strong></td>
+<td align="left">Email or <code>T2T-001</code> + password</td>
+<td align="left">Email or <code>T2T-xxx</code> + password</td>
+</tr>
+<tr>
+<td align="left"><strong>View Organization Health</strong></td>
+<td align="left"><code>/dashboard</code> (KPIs, health score)</td>
+<td align="left">Not available</td>
+</tr>
+<tr>
+<td align="left"><strong>Check today&#39;s assignments</strong></td>
+<td align="left"><code>/my-work</code> or <code>/dashboard</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; Active Workspace</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Start working on a task</strong></td>
+<td align="left"><code>/my-work</code> or <code>/kanban</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Start Working&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Report a blocker</strong></td>
+<td align="left"><code>/tasks</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Flag Blocker&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Submit task for review</strong></td>
+<td align="left"><code>/tasks</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Submit Review&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Mark task complete</strong></td>
+<td align="left"><code>/my-work</code> or <code>/kanban</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Complete&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>View my completed deliverables</strong></td>
+<td align="left"><code>/my-work</code> &amp; <code>/work-overview</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Work History&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Inspect past deliverable scope</strong></td>
+<td align="left"><code>/tasks</code> or <code>/my-work</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Inspect Details&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Reopen a past task</strong></td>
+<td align="left"><code>/tasks</code> or <code>/my-work</code></td>
+<td align="left"><strong><code>/my-work</code> &rarr; &quot;Reopen&quot;</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Move card on Kanban</strong></td>
+<td align="left">Drag &amp; drop on <code>/kanban</code></td>
+<td align="left">Drag &amp; drop on <code>/kanban</code></td>
+</tr>
+<tr>
+<td align="left"><strong>Onboard a new team member</strong></td>
+<td align="left"><strong><code>/users</code> &rarr; &quot;+ Provision Member&quot;</strong></td>
+<td align="left">Not available (Restricted)</td>
+</tr>
+<tr>
+<td align="left"><strong>Deactivate/Suspend an account</strong></td>
+<td align="left"><strong><code>/users</code> &rarr; Toggle Status</strong></td>
+<td align="left">Not available (Restricted)</td>
+</tr>
+<tr>
+<td align="left"><strong>Create a Project or Sprint</strong></td>
+<td align="left"><code>/projects</code> &amp; <code>/agile</code></td>
+<td align="left">View-only</td>
+</tr>
+<tr>
+<td align="left"><strong>Inspect Audit Ledger</strong></td>
+<td align="left"><code>/audit-logs</code></td>
+<td align="left">Not available (Restricted)</td>
+</tr>
+<tr>
+<td align="left"><strong>Change personal password</strong></td>
+<td align="left"><code>/settings</code></td>
+<td align="left"><code>/settings</code></td>
+</tr>
+</tbody></table>
+<hr>
+<p>© 2026 Trash2Treasure Innovations LLP. All rights reserved.</p>
+
+</body>
+</html>
