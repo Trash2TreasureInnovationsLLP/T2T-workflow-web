@@ -1,4 +1,4 @@
-﻿# dependencies
+# dependencies
 /node_modules
 /.pnp
 .pnp.js
@@ -34,6 +34,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma dev db (optional, or keep if wanted)
-prisma/dev.db
+# prisma dev db journal
 prisma/dev.db-journal
+.vercel
