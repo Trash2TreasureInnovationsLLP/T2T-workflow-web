@@ -14,16 +14,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const cleanIdentifier = identifier.trim().toLowerCase();
-    const normalizedEmail = cleanIdentifier.replace(/@trash2treasure\.com$/, "@trash2treasure.co.in");
+    const cleanIdentifier = identifier.trim();
+    const cleanEmail = cleanIdentifier.toLowerCase();
+    const cleanEmpId = cleanIdentifier.toUpperCase();
 
-    // Lookup user by email (primary .co.in or fallback) or employeeId
+    // Strictly reject any legacy .com domain attempts
+    if (cleanEmail.endsWith("@trash2treasure.com")) {
+      return NextResponse.json(
+        { error: "Invalid credentials. The official company domain is @trash2treasure.co.in." },
+        { status: 401 }
+      );
+    }
+
+    // Lookup user strictly by exact email or employeeId
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: normalizedEmail },
-          { email: cleanIdentifier },
-          { employeeId: identifier.trim().toUpperCase() },
+          { email: cleanEmail },
+          { employeeId: cleanEmpId },
         ],
       },
       include: {
