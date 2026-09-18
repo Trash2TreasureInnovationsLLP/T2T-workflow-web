@@ -10,7 +10,9 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "autopush": "node scripts/autopush.js",
+    "push": "node scripts/autopush.js"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",
