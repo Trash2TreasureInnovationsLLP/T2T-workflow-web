@@ -558,6 +558,8 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
+        </div>
+
         {/* Team Leaderboard Spotlight */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-sm border border-slate-700/80 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 relative z-10">
