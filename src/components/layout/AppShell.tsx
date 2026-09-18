@@ -28,6 +28,7 @@ import {
   Sparkles,
   ChevronDown,
   Megaphone,
+  Trophy,
 } from "lucide-react";
 import { SessionUser, getRolePermissions } from "@/lib/types";
 import { Badge } from "../ui/Badge";
@@ -109,6 +110,13 @@ export const AppShell: React.FC<AppShellProps> = ({ children, user }) => {
       icon: UserCheck,
       show: true,
       badge: "Personal",
+    },
+    {
+      label: "Leaderboard",
+      href: "/leaderboard",
+      icon: Trophy,
+      show: true,
+      badge: "Points",
     },
     {
       label: "Projects",

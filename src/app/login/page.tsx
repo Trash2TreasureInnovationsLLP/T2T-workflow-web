@@ -95,7 +95,7 @@ export default function LoginPage() {
                   name="identifier"
                   type="text"
                   required
-                  placeholder="name@trash2treasure.com or T2T-001"
+                  placeholder="name@trash2treasure.co.in or T2T-001"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="block w-full pl-10 pr-3.5 py-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/60 hover:bg-white transition-colors"

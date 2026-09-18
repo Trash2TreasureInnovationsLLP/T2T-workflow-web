@@ -434,7 +434,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
             <input
               type="email"
               required
-              placeholder="e.g. sravan@trash2treasure.com"
+              placeholder="e.g. sravan@trash2treasure.co.in"
               value={createForm.email}
               onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
               className="w-full p-2.5 border border-slate-200 rounded-lg"

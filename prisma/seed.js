@@ -48,7 +48,7 @@ async function main() {
   // CEO / Super Admin
   const vishnu = await prisma.user.create({
     data: {
-      email: "vishnu@trash2treasure.com",
+      email: "vishnu@trash2treasure.co.in",
       employeeId: "T2T-001",
       fullName: "Vishnu (CEO)",
       passwordHash: superAdminPasswordHash,
@@ -65,7 +65,7 @@ async function main() {
   // COO
   const saiNikhil = await prisma.user.create({
     data: {
-      email: "coo@trash2treasure.com",
+      email: "coo@trash2treasure.co.in",
       employeeId: "T2T-002",
       fullName: "Sai Nikhil",
       passwordHash: defaultPasswordHash,
@@ -83,7 +83,7 @@ async function main() {
   // CTO
   const rajesh = await prisma.user.create({
     data: {
-      email: "cto@trash2treasure.com",
+      email: "cto@trash2treasure.co.in",
       employeeId: "T2T-003",
       fullName: "Rajesh Kumar",
       passwordHash: defaultPasswordHash,
@@ -101,7 +101,7 @@ async function main() {
   // CFO
   const priya = await prisma.user.create({
     data: {
-      email: "cfo@trash2treasure.com",
+      email: "cfo@trash2treasure.co.in",
       employeeId: "T2T-004",
       fullName: "Priya Sharma",
       passwordHash: defaultPasswordHash,
@@ -119,7 +119,7 @@ async function main() {
   // CMO
   const anandhi = await prisma.user.create({
     data: {
-      email: "cmo@trash2treasure.com",
+      email: "cmo@trash2treasure.co.in",
       employeeId: "T2T-005",
       fullName: "Anandhi Sundaram",
       passwordHash: defaultPasswordHash,
@@ -137,7 +137,7 @@ async function main() {
   // CAO (Advisory Role)
   const ramanathan = await prisma.user.create({
     data: {
-      email: "cao@trash2treasure.com",
+      email: "cao@trash2treasure.co.in",
       employeeId: "T2T-006",
       fullName: "Dr. S. Ramanathan",
       passwordHash: defaultPasswordHash,
@@ -155,7 +155,7 @@ async function main() {
   // Employee: Tech Lead
   const aarav = await prisma.user.create({
     data: {
-      email: "aarav@trash2treasure.com",
+      email: "aarav@trash2treasure.co.in",
       employeeId: "T2T-007",
       fullName: "Aarav Patel",
       passwordHash: defaultPasswordHash,
@@ -173,7 +173,7 @@ async function main() {
   // Employee: Operations Lead
   const kavya = await prisma.user.create({
     data: {
-      email: "kavya@trash2treasure.com",
+      email: "kavya@trash2treasure.co.in",
       employeeId: "T2T-008",
       fullName: "Kavya Reddy",
       passwordHash: defaultPasswordHash,
@@ -191,7 +191,7 @@ async function main() {
   // Intern: Developer
   const ananya = await prisma.user.create({
     data: {
-      email: "ananya@trash2treasure.com",
+      email: "ananya@trash2treasure.co.in",
       employeeId: "T2T-009",
       fullName: "Ananya Sen",
       passwordHash: defaultPasswordHash,
@@ -209,7 +209,7 @@ async function main() {
   // New user with mustChangePassword = true (for demonstrating forced reset flow)
   const newIntern = await prisma.user.create({
     data: {
-      email: "newbie@trash2treasure.com",
+      email: "newbie@trash2treasure.co.in",
       employeeId: "T2T-010",
       fullName: "Rohan Malhotra (First Login Demo)",
       passwordHash: defaultPasswordHash,
@@ -502,6 +502,142 @@ async function main() {
       actualEffort: 12,
       tags: "Audit, Quality, RoHS",
       dueDate: new Date("2026-09-22"),
+    },
+    {
+      taskId: "T2T-1011",
+      title: "Migrate edge sorting pipeline to containerized Docker deployment",
+      description: "Package sorting runtime with CUDA libraries for deterministic deployment across all 4 plants.",
+      projectId: prjSmartWaste.id,
+      sprintId: sprint14.id,
+      assigneeId: rajesh.id,
+      createdById: vishnu.id,
+      priority: "URGENT",
+      status: "COMPLETED",
+      storyPoints: 8,
+      estimatedEffort: 30,
+      actualEffort: 28,
+      tags: "DevOps, Docker, Edge",
+      dueDate: new Date("2026-09-12"),
+      completedAt: new Date("2026-09-11"),
+    },
+    {
+      taskId: "T2T-1012",
+      title: "Establish hazardous lithium-ion battery extraction safety protocol",
+      description: "Standard operating manual for secondary battery discharging and acid leakage containment.",
+      projectId: prjEWasteMarket.id,
+      sprintId: null,
+      assigneeId: kavya.id,
+      createdById: saiNikhil.id,
+      priority: "URGENT",
+      status: "COMPLETED",
+      storyPoints: 5,
+      estimatedEffort: 20,
+      actualEffort: 18,
+      tags: "Safety, Operations, Battery",
+      dueDate: new Date("2026-09-14"),
+      completedAt: new Date("2026-09-13"),
+    },
+    {
+      taskId: "T2T-1013",
+      title: "Municipal scrap collection route optimization - Zone 4",
+      description: "Reduce truck turnaround travel time by 18% along Kukatpally and Balanagar commercial corridors.",
+      projectId: prjFleetLogistics.id,
+      sprintId: null,
+      assigneeId: saiNikhil.id,
+      createdById: vishnu.id,
+      priority: "HIGH",
+      status: "COMPLETED",
+      storyPoints: 5,
+      estimatedEffort: 24,
+      actualEffort: 22,
+      tags: "Logistics, Route, Fleet",
+      dueDate: new Date("2026-09-10"),
+      completedAt: new Date("2026-09-09"),
+    },
+    {
+      taskId: "T2T-1014",
+      title: "Synthetic dataset generation for crushed PET bottle shapes",
+      description: "Generated 5,000 ray-traced deformed plastic bottles to train classifier against skewed lighting.",
+      projectId: prjSmartWaste.id,
+      sprintId: sprint14.id,
+      assigneeId: ananya.id,
+      createdById: aarav.id,
+      priority: "HIGH",
+      status: "COMPLETED",
+      storyPoints: 5,
+      estimatedEffort: 18,
+      actualEffort: 16,
+      tags: "AI, Dataset, Blender",
+      dueDate: new Date("2026-09-14"),
+      completedAt: new Date("2026-09-14"),
+    },
+    {
+      taskId: "T2T-1015",
+      title: "Finalize Extended Producer Responsibility (EPR) compliance audit",
+      description: "Audit reports aligned with Central Pollution Control Board (CPCB) quarterly filings.",
+      projectId: prjCarbonCredits.id,
+      sprintId: null,
+      assigneeId: priya.id,
+      createdById: vishnu.id,
+      priority: "HIGH",
+      status: "COMPLETED",
+      storyPoints: 5,
+      estimatedEffort: 16,
+      actualEffort: 14,
+      tags: "Finance, Compliance, Audit",
+      dueDate: new Date("2026-09-12"),
+      completedAt: new Date("2026-09-11"),
+    },
+    {
+      taskId: "T2T-1016",
+      title: "Circular Economy Investor Pitch Deck & Series A Roadmap",
+      description: "Structured 5-year unit economics for expanding automated sorting lines to 12 Indian states.",
+      projectId: prjCarbonCredits.id,
+      sprintId: null,
+      assigneeId: vishnu.id,
+      createdById: vishnu.id,
+      priority: "URGENT",
+      status: "COMPLETED",
+      storyPoints: 8,
+      estimatedEffort: 25,
+      actualEffort: 24,
+      tags: "Strategy, Executive, Fundraising",
+      dueDate: new Date("2026-09-16"),
+      completedAt: new Date("2026-09-15"),
+    },
+    {
+      taskId: "T2T-1017",
+      title: "E-Waste vendor onboarding security vetting",
+      description: "Validate digital certificates and GST compliance of 24 smelting partners.",
+      projectId: prjEWasteMarket.id,
+      sprintId: null,
+      assigneeId: kavya.id,
+      createdById: saiNikhil.id,
+      priority: "MEDIUM",
+      status: "COMPLETED",
+      storyPoints: 3,
+      estimatedEffort: 12,
+      actualEffort: 10,
+      tags: "Vendors, KYC, Ops",
+      dueDate: new Date("2026-09-08"),
+      completedAt: new Date("2026-09-07"),
+    },
+    {
+      taskId: "T2T-1018",
+      title: "Sort shed emergency shutdown switch latency test",
+      description: "Measure hard stop response time under simulated 50-item-per-minute throughput.",
+      projectId: prjSmartWaste.id,
+      sprintId: sprint14.id,
+      assigneeId: rajesh.id,
+      createdById: vishnu.id,
+      priority: "HIGH",
+      status: "COMPLETED",
+      storyPoints: 5,
+      estimatedEffort: 14,
+      actualEffort: 12,
+      tags: "Safety, IoT, Hardware",
+      dueDate: new Date("2026-09-15"),
+      completedAt: new Date("2026-09-15"),
     },
   ];
 

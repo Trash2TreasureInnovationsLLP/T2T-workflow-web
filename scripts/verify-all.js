@@ -67,7 +67,7 @@ async function runVerification() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       },
-      { identifier: "fake@trash2treasure.com", password: "wrong" }
+      { identifier: "fake@trash2treasure.co.in", password: "wrong" }
     );
     assert(failLogin.statusCode === 401, "Invalid login rejected with HTTP 401");
 
@@ -80,7 +80,7 @@ async function runVerification() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       },
-      { identifier: "vishnu@trash2treasure.com", password: "Konda@nagaveni07" }
+      { identifier: "vishnu@trash2treasure.co.in", password: "Konda@nagaveni07" }
     );
     assert(ceoLogin.statusCode === 200, "Super Admin (CEO Vishnu) login success HTTP 200");
     assert(ceoLogin.data.user?.role === "SUPER_ADMIN", "Super Admin role returned correctly");
@@ -111,7 +111,7 @@ async function runVerification() {
       method: "GET",
       headers: { Cookie: cookie },
     });
-    assert(meRes.statusCode === 200 && meRes.data.user?.email === "vishnu@trash2treasure.com", "Session verified via /api/auth/me");
+    assert(meRes.statusCode === 200 && meRes.data.user?.email === "vishnu@trash2treasure.co.in", "Session verified via /api/auth/me");
 
     // 5. Test Executive KPIs
     const kpiRes = await request({
@@ -258,7 +258,7 @@ async function runVerification() {
     assert(searchRes.statusCode === 200, "Global search HTTP 200");
     assert(searchRes.data.projects?.length > 0 || searchRes.data.tasks?.length > 0, "Global search returned matching projects/tasks");
 
-    // 15. Test Forced Password Change on First Login (User: Rohan newbie@trash2treasure.com)
+    // 15. Test Forced Password Change on First Login (User: Rohan newbie@trash2treasure.co.in)
     const newLogin = await request(
       {
         hostname: "localhost",
@@ -267,7 +267,7 @@ async function runVerification() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       },
-      { identifier: "newbie@trash2treasure.com", password: "T2T@Password2026!" }
+      { identifier: "newbie@trash2treasure.co.in", password: "T2T@Password2026!" }
     );
     assert(newLogin.statusCode === 200, "First-login user authenticated HTTP 200");
     assert(newLogin.data.mustChangePassword === true, "mustChangePassword flag is true for new user");
@@ -281,7 +281,7 @@ async function runVerification() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       },
-      { identifier: "cao@trash2treasure.com", password: "T2T@Password2026!" }
+      { identifier: "cao@trash2treasure.co.in", password: "T2T@Password2026!" }
     );
     const caoCookie = caoLogin.headers["set-cookie"][0].split(";")[0];
 
@@ -297,6 +297,22 @@ async function runVerification() {
       { status: "COMPLETED" }
     );
     assert(caoMutate.statusCode === 403, "CAO advisory role blocked from mutating task (HTTP 403)");
+
+    // 17. Test Leaderboard System API (/api/leaderboard)
+    const lbRes = await request({
+      hostname: "localhost",
+      port: 3000,
+      path: "/api/leaderboard",
+      method: "GET",
+      headers: { Cookie: cookie },
+    });
+    assert(lbRes.statusCode === 200, "Leaderboard API returned HTTP 200");
+    assert(Array.isArray(lbRes.data.leaderboard), "Leaderboard members array returned");
+    assert(lbRes.data.leaderboard.length > 0, "Leaderboard has ranked members");
+    assert(lbRes.data.leaderboard[0].rank === 1, "Leaderboard has top ranked member (#1)");
+    assert(lbRes.data.leaderboard[0].totalPoints >= lbRes.data.leaderboard[1].totalPoints, "Leaderboard sorted descending by totalPoints");
+    assert(lbRes.data.currentUserStanding?.employeeId === "T2T-001", "Current user (Super Admin) standing identified");
+    assert(lbRes.data.summary?.totalTeamPoints > 0, "Team total points calculated");
 
     console.log("\n====================================================");
     console.log(`🏁 VERIFICATION COMPLETE: ${passed} PASSED, ${failed} FAILED`);

@@ -21,7 +21,9 @@ import {
   Calendar,
   Layers,
   Sparkles,
+  Trophy,
 } from "lucide-react";
+import { calculateTaskPoints } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,7 @@ export default async function DashboardPage() {
     criticalTasks,
     recentActivity,
     announcements,
+    leaderboardMembers,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { accountStatus: "ACTIVE" } }),
@@ -110,6 +113,29 @@ export default async function DashboardPage() {
       take: 1,
       include: { author: true },
     }),
+    prisma.user.findMany({
+      where: { accountStatus: "ACTIVE" },
+      select: {
+        id: true,
+        fullName: true,
+        avatarUrl: true,
+        designation: true,
+        department: { select: { name: true } },
+        assignedTasks: {
+          where: { status: "COMPLETED" },
+          select: {
+            id: true,
+            taskId: true,
+            title: true,
+            priority: true,
+            status: true,
+            storyPoints: true,
+            dueDate: true,
+            completedAt: true,
+          },
+        },
+      },
+    }),
   ]);
 
   // Calculate Sprint completion
@@ -139,7 +165,20 @@ export default async function DashboardPage() {
           25
       )
     )
-  );
+  // Calculate Top Leaderboard Performers
+  const rankedLeaders = leaderboardMembers
+    .map((m) => {
+      const points = m.assignedTasks.reduce((sum, t) => {
+        return sum + calculateTaskPoints(t).totalPoints;
+      }, 0);
+      return {
+        ...m,
+        points,
+        tasksCompleted: m.assignedTasks.length,
+      };
+    })
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 3);
 
   return (
     <AppShell user={user}>
@@ -516,6 +555,68 @@ export default async function DashboardPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+          </div>
+        {/* Team Leaderboard Spotlight */}
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-sm border border-slate-700/80 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-400/20 text-amber-400 rounded-xl border border-amber-400/30">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  Team Work Leaderboard Spotlight
+                  <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30">
+                    Live Rankings
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300">
+                  Dynamic points computed from completed work priority levels (Urgent, High, Med, Low).
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-white/10 hover:bg-white/15 px-3.5 py-2 rounded-xl transition-all self-start sm:self-auto border border-white/10"
+            >
+              <span>View Full Leaderboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+            {rankedLeaders.map((leader, index) => {
+              const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉";
+              return (
+                <div
+                  key={leader.id}
+                  className="bg-white/5 backdrop-blur-xs border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3 hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl select-none">{medal}</span>
+                    <UserAvatar
+                      fullName={leader.fullName}
+                      avatarUrl={leader.avatarUrl}
+                      size="md"
+                    />
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{leader.fullName}</h4>
+                      <p className="text-[11px] text-emerald-200/80">{leader.designation}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-base font-black text-amber-300 flex items-center justify-end gap-1">
+                      <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>{leader.points}</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {leader.tasksCompleted} tasks
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

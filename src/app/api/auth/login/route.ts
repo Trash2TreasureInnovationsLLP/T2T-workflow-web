@@ -14,11 +14,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Lookup user by email or employeeId
+    const cleanIdentifier = identifier.trim().toLowerCase();
+    const normalizedEmail = cleanIdentifier.replace(/@trash2treasure\.com$/, "@trash2treasure.co.in");
+
+    // Lookup user by email (primary .co.in or fallback) or employeeId
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: identifier.trim().toLowerCase() },
+          { email: normalizedEmail },
+          { email: cleanIdentifier },
           { employeeId: identifier.trim().toUpperCase() },
         ],
       },

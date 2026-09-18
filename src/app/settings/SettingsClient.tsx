@@ -205,7 +205,7 @@ export const SettingsClient: React.FC<SettingsClientProps> = ({ departments, cur
                 </label>
                 <input
                   type="text"
-                  defaultValue="trash2treasure.com"
+                  defaultValue="trash2treasure.co.in"
                   className="w-full p-2.5 border border-slate-200 rounded-lg"
                 />
               </div>
