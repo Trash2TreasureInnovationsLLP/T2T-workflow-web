@@ -314,6 +314,48 @@ async function runVerification() {
     assert(lbRes.data.currentUserStanding?.employeeId === "T2T-001", "Current user (Super Admin) standing identified");
     assert(lbRes.data.summary?.totalTeamPoints > 0, "Team total points calculated");
 
+    // 18. Test Profile Page Load (/profile)
+    const profilePage = await request({
+      hostname: "localhost",
+      port: 3000,
+      path: "/profile",
+      method: "GET",
+      headers: { Cookie: cookie },
+    });
+    assert(profilePage.statusCode === 200, "Profile page HTTP 200 for authenticated user");
+
+    // 19. Test Profile API GET (/api/users/profile)
+    const profileGet = await request({
+      hostname: "localhost",
+      port: 3000,
+      path: "/api/users/profile",
+      method: "GET",
+      headers: { Cookie: cookie },
+    });
+    assert(profileGet.statusCode === 200, "Profile API GET returned HTTP 200");
+    assert(profileGet.data.user?.employeeId === "T2T-001", "Profile API returns correct user details");
+
+    // 20. Test Profile Picture & Info Update PATCH (/api/users/profile)
+    const sampleAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=256";
+    const profilePatch = await request(
+      {
+        hostname: "localhost",
+        port: 3000,
+        path: "/api/users/profile",
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+      },
+      {
+        avatarUrl: sampleAvatar,
+        fullName: "Vishnu (Super Admin)",
+        skills: "Full-Stack, Circular Tech, Waste-to-Value, Agile Leadership",
+      }
+    );
+    assert(profilePatch.statusCode === 200, "Profile API PATCH returned HTTP 200");
+    assert(profilePatch.data.user?.avatarUrl === sampleAvatar, "Profile picture avatarUrl saved successfully");
+    assert(profilePatch.data.user?.skills?.includes("Circular Tech"), "Profile skills updated successfully");
+    assert(profilePatch.headers["set-cookie"]?.length > 0, "Session token cookie refreshed on profile picture update");
+
     console.log("\n====================================================");
     console.log(`🏁 VERIFICATION COMPLETE: ${passed} PASSED, ${failed} FAILED`);
     console.log("====================================================");

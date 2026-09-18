@@ -22,7 +22,7 @@ interface CalendarClientProps {
 export const CalendarClient: React.FC<CalendarClientProps> = ({ currentUser }) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date("2026-09-18"));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "day">("month");
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 

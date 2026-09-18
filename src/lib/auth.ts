@@ -26,6 +26,7 @@ export function signToken(user: SessionUser): string {
       role: user.role,
       designation: user.designation,
       departmentId: user.departmentId,
+      avatarUrl: user.avatarUrl,
       mustChangePassword: user.mustChangePassword,
       accountStatus: user.accountStatus,
     },

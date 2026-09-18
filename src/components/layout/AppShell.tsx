@@ -29,6 +29,7 @@ import {
   ChevronDown,
   Megaphone,
   Trophy,
+  User,
 } from "lucide-react";
 import { SessionUser, getRolePermissions } from "@/lib/types";
 import { Badge } from "../ui/Badge";
@@ -185,6 +186,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children, user }) => {
       icon: ShieldAlert,
       show: permissions.canViewAuditLogs,
       badge: "Audit",
+    },
+    {
+      label: "My Profile",
+      href: "/profile",
+      icon: User,
+      show: true,
     },
     {
       label: "Organization Settings",
@@ -415,6 +422,15 @@ export const AppShell: React.FC<AppShellProps> = ({ children, user }) => {
                 </div>
 
                 <div className="py-1.5">
+                  <Link
+                    href="/profile"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium"
+                  >
+                    <User className="w-4 h-4 text-slate-500" />
+                    <span>My Profile</span>
+                  </Link>
+
                   <Link
                     href="/my-work"
                     onClick={() => setUserDropdownOpen(false)}
