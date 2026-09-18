@@ -165,6 +165,8 @@ export default async function DashboardPage() {
           25
       )
     )
+  );
+
   // Calculate Top Leaderboard Performers
   const rankedLeaders = leaderboardMembers
     .map((m) => {
