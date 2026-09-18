@@ -79,8 +79,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   // If official logo is specified
   const isLogo =
     avatarUrl === "/t2t-logo.png" ||
-    avatarUrl === "t2t-logo.png" ||
-    (user?.role === "SUPER_ADMIN" && !hasError && avatarUrl);
+    avatarUrl === "t2t-logo.png";
 
   if (avatarUrl && !hasError) {
     if (isLogo) {

@@ -132,7 +132,7 @@ export const ProfileClient: React.FC<ProfileClientProps> = ({
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        const MAX_SIZE = 256;
+        const MAX_SIZE = 192;
         let width = img.width;
         let height = img.height;
 
@@ -152,7 +152,7 @@ export const ProfileClient: React.FC<ProfileClientProps> = ({
         canvas.height = height;
         ctx?.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
         setAvatarPreview(dataUrl);
         setShowUrlInput(false);
         setMessage({
@@ -219,6 +219,7 @@ export const ProfileClient: React.FC<ProfileClientProps> = ({
         ...prev,
         ...data.user,
       }));
+      setAvatarPreview(data.user.avatarUrl);
 
       setMessage({
         type: "success",
