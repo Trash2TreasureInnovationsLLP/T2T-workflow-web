@@ -10,6 +10,8 @@ interface UserAvatarProps {
   } | null;
   src?: string | null;
   name?: string | null;
+  fullName?: string | null;
+  avatarUrl?: string | null;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }
@@ -26,13 +28,15 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   user,
   src,
   name,
+  fullName: directFullName,
+  avatarUrl: directAvatarUrl,
   size = "sm",
   className = "",
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  const fullName = name || user?.fullName || "User";
-  let avatarUrl = src !== undefined ? src : user?.avatarUrl;
+  const fullName = name || directFullName || user?.fullName || "User";
+  let avatarUrl = src !== undefined ? src : (directAvatarUrl !== undefined ? directAvatarUrl : user?.avatarUrl);
 
   // Filter out any legacy female placeholder photo
   if (avatarUrl && avatarUrl.includes("photo-1494790108377-be9c29b29330")) {

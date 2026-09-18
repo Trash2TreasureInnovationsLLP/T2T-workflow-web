@@ -600,8 +600,7 @@ export default async function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl select-none">{medal}</span>
                     <UserAvatar
-                      fullName={leader.fullName}
-                      avatarUrl={leader.avatarUrl}
+                      user={leader}
                       size="md"
                     />
                     <div>
