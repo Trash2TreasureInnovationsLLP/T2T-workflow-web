@@ -78,7 +78,7 @@ export function getMemberTier(points: number): TierInfo {
   if (points >= 500) {
     return {
       tier: "GRANDMASTER",
-      label: "?? Grandmaster",
+      label: "👑 Grandmaster",
       badgeColor: "bg-purple-100 text-purple-700 border-purple-300",
       nextTier: null,
       pointsNeeded: 0,
@@ -88,7 +88,7 @@ export function getMemberTier(points: number): TierInfo {
   if (points >= 300) {
     return {
       tier: "CHAMPION",
-      label: "?? Circular Champion",
+      label: "🏆 Circular Champion",
       badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
       nextTier: "Grandmaster (500 pts)",
       pointsNeeded: 500 - points,
@@ -98,7 +98,7 @@ export function getMemberTier(points: number): TierInfo {
   if (points >= 150) {
     return {
       tier: "SPECIALIST",
-      label: "?? Agile Specialist",
+      label: "⚡ Agile Specialist",
       badgeColor: "bg-sky-100 text-sky-800 border-sky-300",
       nextTier: "Circular Champion (300 pts)",
       pointsNeeded: 300 - points,
@@ -108,7 +108,7 @@ export function getMemberTier(points: number): TierInfo {
   if (points >= 50) {
     return {
       tier: "CONTRIBUTOR",
-      label: "?? Active Contributor",
+      label: "⭐ Active Contributor",
       badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
       nextTier: "Agile Specialist (150 pts)",
       pointsNeeded: 150 - points,
@@ -117,7 +117,7 @@ export function getMemberTier(points: number): TierInfo {
   }
   return {
     tier: "INNOVATOR",
-    label: "?? Rising Innovator",
+    label: "🌱 Rising Innovator",
     badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
     nextTier: "Active Contributor (50 pts)",
     pointsNeeded: 50 - points,
