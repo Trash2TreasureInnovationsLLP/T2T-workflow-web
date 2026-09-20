@@ -76,9 +76,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate Project ID e.g. T2T-PRJ-05
-    const count = await prisma.project.count();
-    const projectId = `T2T-PRJ-${String(count + 1).padStart(2, "0")}`;
+    // Generate safe sequential Project ID e.g. T2T-PRJ-01
+    const allProjects = await prisma.project.findMany({ select: { projectId: true } });
+    let maxProjectNum = 0;
+    for (const p of allProjects) {
+      const match = p.projectId?.match(/T2T-PRJ-(\d+)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxProjectNum) maxProjectNum = num;
+      }
+    }
+    const projectId = `T2T-PRJ-${String(maxProjectNum + 1).padStart(2, "0")}`;
 
     const newProject = await prisma.project.create({
       data: {

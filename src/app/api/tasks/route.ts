@@ -100,9 +100,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Auto-generate next task ID (e.g. T2T-1011)
-    const taskCount = await prisma.task.count();
-    const taskId = `T2T-${1000 + taskCount + 1}`;
+    // Auto-generate next task ID (e.g. T2T-1001)
+    const allTasks = await prisma.task.findMany({ select: { taskId: true } });
+    let maxTaskNum = 1000;
+    for (const t of allTasks) {
+      const match = t.taskId?.match(/T2T-(\d+)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxTaskNum) maxTaskNum = num;
+      }
+    }
+    const taskId = `T2T-${maxTaskNum + 1}`;
 
     const newTask = await prisma.task.create({
       data: {
