@@ -106,7 +106,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const updatedUser = await prisma.user.update({
       where: { id: params.id },
       data: updateData,
-      include: { department: true },
+      include: {
+        department: true,
+        reportingManager: { select: { id: true, fullName: true } },
+        _count: {
+          select: {
+            assignedTasks: true,
+            projectMemberships: true,
+          },
+        },
+      },
     });
 
     await logActivity({

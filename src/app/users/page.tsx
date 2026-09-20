@@ -29,7 +29,7 @@ export default async function UsersPage() {
         },
       },
     }),
-    prisma.department.findMany({ select: { id: true, name: true } }),
+    prisma.department.findMany({ select: { id: true, name: true, code: true } }),
   ]);
 
   return (

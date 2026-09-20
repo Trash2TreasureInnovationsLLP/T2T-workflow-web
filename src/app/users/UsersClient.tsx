@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Users,
@@ -36,6 +36,11 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("ALL");
 
+  // Keep users synchronized when server data revalidates
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
   // Create user modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -49,6 +54,16 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [newCredentialsBanner, setNewCredentialsBanner] = useState<any | null>(null);
+
+  // Automatically update departmentId in form if departments change or become available
+  useEffect(() => {
+    if (!createForm.departmentId && departments.length > 0) {
+      setCreateForm((prev) => ({
+        ...prev,
+        departmentId: prev.departmentId || departments[0].id,
+      }));
+    }
+  }, [departments]);
 
   // Edit user modal
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -71,7 +86,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         u.fullName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
         u.employeeId.toLowerCase().includes(q) ||
-        u.designation.toLowerCase().includes(q)
+        (u.designation && u.designation.toLowerCase().includes(q))
       );
     }
     return true;
@@ -90,11 +105,26 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
       const data = await res.json();
       if (res.ok) {
-        setUsers((prev) => [data.user, ...prev]);
+        // Guarantee department object and designation are present
+        const resolvedDept =
+          data.user.department ||
+          departments.find((d) => d.id === data.user.departmentId) ||
+          null;
+
+        const fullNewUser = {
+          ...data.user,
+          department: resolvedDept,
+          departmentId: data.user.departmentId || resolvedDept?.id || null,
+          designation: data.user.designation || createForm.designation,
+          accountStatus: data.user.accountStatus || "ACTIVE",
+          _count: data.user._count || { assignedTasks: 0, projectMemberships: 0 },
+        };
+
+        setUsers((prev) => [fullNewUser, ...prev]);
         setNewCredentialsBanner({
-          name: data.user.fullName,
-          email: data.user.email,
-          empId: data.user.employeeId,
+          name: fullNewUser.fullName,
+          email: fullNewUser.email,
+          empId: fullNewUser.employeeId,
           tempPass: data.temporaryPassword,
         });
         setCreateModalOpen(false);
@@ -121,11 +151,11 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const handleOpenEdit = (user: any) => {
     setSelectedUser(user);
     setEditForm({
-      fullName: user.fullName,
-      role: user.role,
-      departmentId: user.departmentId || "",
-      designation: user.designation,
-      accountStatus: user.accountStatus,
+      fullName: user.fullName || "",
+      role: user.role || "EMPLOYEE",
+      departmentId: user.departmentId || user.department?.id || "",
+      designation: user.designation || "",
+      accountStatus: user.accountStatus || "ACTIVE",
     });
     setEditModalOpen(true);
   };
@@ -144,7 +174,22 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
       if (res.ok) {
         const updated = await res.json();
-        setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+        const resolvedDept =
+          updated.department ||
+          departments.find((d) => d.id === (updated.departmentId || editForm.departmentId)) ||
+          null;
+
+        const mergedUser = {
+          ...selectedUser,
+          ...updated,
+          department: resolvedDept,
+          departmentId: updated.departmentId || editForm.departmentId || null,
+          designation: updated.designation || editForm.designation,
+        };
+
+        setUsers((prev) =>
+          prev.map((u) => (u.id === mergedUser.id ? mergedUser : u))
+        );
         setEditModalOpen(false);
         router.refresh();
       } else {
@@ -343,10 +388,12 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                   </td>
 
                   <td className="py-3.5 px-4 text-slate-700">
-                    {u.department?.name || "Unassigned"}
+                    {u.department?.name ||
+                      departments.find((d) => d.id === u.departmentId)?.name ||
+                      "Unassigned"}
                   </td>
 
-                  <td className="py-3.5 px-4 font-medium text-slate-800">{u.designation}</td>
+                  <td className="py-3.5 px-4 font-medium text-slate-800">{u.designation || "—"}</td>
 
                   <td className="py-3.5 px-4 text-slate-600">
                     <span className="font-semibold text-slate-800">{u._count?.assignedTasks || 0}</span> tasks •{" "}
@@ -472,6 +519,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                 onChange={(e) => setCreateForm({ ...createForm, departmentId: e.target.value })}
                 className="w-full p-2.5 border border-slate-200 rounded-lg bg-white"
               >
+                <option value="">Select Department (Optional)</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}

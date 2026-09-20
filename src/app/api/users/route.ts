@@ -133,6 +133,25 @@ export async function POST(req: Request) {
           employeeId: newUser.employeeId,
           fullName: newUser.fullName,
           role: newUser.role,
+          designation: newUser.designation,
+          departmentId: newUser.departmentId,
+          department: newUser.department
+            ? {
+                id: newUser.department.id,
+                name: newUser.department.name,
+                code: newUser.department.code,
+              }
+            : null,
+          accountStatus: newUser.accountStatus,
+          joiningDate: newUser.joiningDate,
+          lastActive: newUser.lastActive,
+          avatarUrl: newUser.avatarUrl,
+          skills: newUser.skills,
+          reportingManager: null,
+          _count: {
+            assignedTasks: 0,
+            projectMemberships: 0,
+          },
         },
         temporaryPassword: tempPass,
       },
