@@ -89,9 +89,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "A user with this email already exists." }, { status: 400 });
     }
 
-    // Generate Employee ID e.g. T2T-013
-    const userCount = await prisma.user.count();
-    const employeeId = `T2T-${String(userCount + 1).padStart(3, "0")}`;
+    // Generate safe sequential Employee ID e.g. T2T-002
+    const allUsers = await prisma.user.findMany({
+      select: { employeeId: true },
+    });
+    let maxId = 0;
+    for (const u of allUsers) {
+      const match = u.employeeId?.match(/T2T-(\d+)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxId) maxId = num;
+      }
+    }
+    const employeeId = `T2T-${String(maxId + 1).padStart(3, "0")}`;
+
+    // Verify department exists before linking to avoid FK constraint errors
+    let validDeptId: string | null = null;
+    if (departmentId) {
+      const deptExists = await prisma.department.findUnique({
+        where: { id: departmentId },
+      });
+      if (deptExists) {
+        validDeptId = deptExists.id;
+      } else {
+        const deptByName = await prisma.department.findFirst({
+          where: {
+            OR: [
+              { name: departmentId },
+              { code: departmentId },
+            ],
+          },
+        });
+        if (deptByName) validDeptId = deptByName.id;
+      }
+    }
 
     const tempPass = temporaryPassword || "T2T@Temp2026!";
     const passwordHash = await hashPassword(tempPass);
@@ -104,7 +135,7 @@ export async function POST(req: Request) {
         passwordHash,
         mustChangePassword: true, // Forces password change on first login
         role,
-        departmentId: departmentId || null,
+        departmentId: validDeptId,
         designation: designation.trim(),
         reportingManagerId: reportingManagerId || null,
         skills: skills.trim(),
@@ -157,8 +188,8 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("User POST error:", error);
-    return NextResponse.json({ error: "Failed to create user." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Failed to create user." }, { status: 500 });
   }
 }

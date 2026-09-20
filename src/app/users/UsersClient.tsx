@@ -36,9 +36,15 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("ALL");
 
-  // Keep users synchronized when server data revalidates
+  // Keep users synchronized when server data revalidates, preserving any locally created users
   useEffect(() => {
-    setUsers(initialUsers);
+    if (initialUsers && initialUsers.length > 0) {
+      setUsers((prev) => {
+        const serverIds = new Set(initialUsers.map((u) => u.id));
+        const localOnly = prev.filter((u) => !serverIds.has(u.id));
+        return [...localOnly, ...initialUsers];
+      });
+    }
   }, [initialUsers]);
 
   // Create user modal
@@ -120,7 +126,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           _count: data.user._count || { assignedTasks: 0, projectMemberships: 0 },
         };
 
-        setUsers((prev) => [fullNewUser, ...prev]);
+        setUsers((prev) => [fullNewUser, ...prev.filter((u) => u.id !== fullNewUser.id)]);
         setNewCredentialsBanner({
           name: fullNewUser.fullName,
           email: fullNewUser.email,
@@ -137,6 +143,10 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           skills: "",
           temporaryPassword: "T2T@Temp2026!",
         });
+        // Clear active filters so the new member is immediately visible in the table
+        setRoleFilter("ALL");
+        setDeptFilter("ALL");
+        setSearchTerm("");
         router.refresh();
       } else {
         alert(data.error || "Failed to create user.");
