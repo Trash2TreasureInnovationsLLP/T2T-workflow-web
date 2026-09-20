@@ -17,7 +17,6 @@ import {
   IdCard,
   Calendar,
   Shield,
-  Award,
   Trophy,
   Sparkles,
   Save,
@@ -309,23 +308,22 @@ export const ProfileClient: React.FC<ProfileClientProps> = ({
           </div>
 
           {/* Leaderboard Standing & Points Spotlight */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex md:flex-col items-center justify-between gap-3 text-center shrink-0">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-300" />
-              <div className="text-left">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-200 block">
-                  Total Points
-                </span>
-                <span className="text-xl font-black text-amber-300">
-                  {totalPoints} pts
-                </span>
-              </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center shrink-0 min-w-[160px]">
+            <div className="flex items-center justify-center gap-1.5">
+              <Trophy className="w-4 h-4 text-amber-300 shrink-0" />
+              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-200">
+                Total Points
+              </span>
             </div>
+
+            <div className="text-2xl font-black text-amber-300 tracking-tight leading-none my-0.5">
+              {totalPoints} <span className="text-xs font-bold text-amber-200/90">pts</span>
+            </div>
+
             <Link
               href="/leaderboard"
-              className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5"
+              className="w-full px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all flex items-center justify-center text-center shadow-2xs hover:scale-[1.02]"
             >
-              <Award className="w-3.5 h-3.5 text-amber-300" />
               <span>{tierInfo.label}</span>
             </Link>
           </div>
