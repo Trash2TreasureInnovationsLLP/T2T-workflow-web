@@ -14,6 +14,8 @@ import {
   Ban,
   UserCheck,
   AlertCircle,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -36,13 +38,60 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("ALL");
 
-  // Keep users synchronized when server data revalidates, preserving any locally created users
+  // Track locally updated and deleted users to avoid stale server revalidation overwriting client state
+  const locallyUpdatedUsersRef = React.useRef<Map<string, any>>(new Map());
+  const locallyDeletedUserIdsRef = React.useRef<Set<string>>(new Set());
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Bulk selection state
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+
+  // Keep users synchronized when server data revalidates, preserving any locally created or updated users
   useEffect(() => {
     if (initialUsers && initialUsers.length > 0) {
       setUsers((prev) => {
-        const serverIds = new Set(initialUsers.map((u) => u.id));
-        const localOnly = prev.filter((u) => !serverIds.has(u.id));
-        return [...localOnly, ...initialUsers];
+        const merged: any[] = [];
+        const seenIds = new Set<string>();
+
+        // Process server users
+        for (const serverUser of initialUsers) {
+          if (locallyDeletedUserIdsRef.current.has(serverUser.id)) {
+            continue; // Ignore deleted user even if stale server data returned it
+          }
+
+          seenIds.add(serverUser.id);
+          const localUpdated = locallyUpdatedUsersRef.current.get(serverUser.id);
+          if (localUpdated) {
+            const serverTime = new Date(serverUser.updatedAt || 0).getTime();
+            const localTime = new Date(localUpdated.updatedAt || 0).getTime();
+            // If server caught up with our edit
+            if (serverTime >= localTime && serverUser.fullName === localUpdated.fullName) {
+              locallyUpdatedUsersRef.current.delete(serverUser.id);
+              merged.push(serverUser);
+            } else {
+              // Server is still stale, preserve our edited fields
+              merged.push({ ...serverUser, ...localUpdated });
+            }
+          } else {
+            merged.push(serverUser);
+          }
+        }
+
+        // Preserve any local-only users (e.g. newly created users not yet in initialUsers)
+        for (const u of prev) {
+          if (!seenIds.has(u.id) && !locallyDeletedUserIdsRef.current.has(u.id)) {
+            merged.unshift(u);
+            seenIds.add(u.id);
+          }
+        }
+
+        return merged;
       });
     }
   }, [initialUsers]);
@@ -126,6 +175,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           _count: data.user._count || { assignedTasks: 0, projectMemberships: 0 },
         };
 
+        locallyUpdatedUsersRef.current.set(fullNewUser.id, fullNewUser);
         setUsers((prev) => [fullNewUser, ...prev.filter((u) => u.id !== fullNewUser.id)]);
         setNewCredentialsBanner({
           name: fullNewUser.fullName,
@@ -173,13 +223,26 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
+
+    const trimmedName = editForm.fullName?.trim();
+    if (!trimmedName) {
+      alert("Full Name cannot be empty.");
+      return;
+    }
+
     setEditLoading(true);
 
     try {
+      const payload = {
+        ...editForm,
+        fullName: trimmedName,
+        designation: editForm.designation?.trim(),
+      };
+
       const res = await fetch(`/api/users/${selectedUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -192,14 +255,22 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         const mergedUser = {
           ...selectedUser,
           ...updated,
+          fullName: trimmedName,
+          designation: payload.designation || updated.designation,
+          role: payload.role || updated.role,
           department: resolvedDept,
           departmentId: updated.departmentId || editForm.departmentId || null,
-          designation: updated.designation || editForm.designation,
+          accountStatus: payload.accountStatus || updated.accountStatus,
+          updatedAt: updated.updatedAt || new Date().toISOString(),
         };
+
+        // Cache local update to prevent any stale server revalidation from reverting
+        locallyUpdatedUsersRef.current.set(mergedUser.id, mergedUser);
 
         setUsers((prev) =>
           prev.map((u) => (u.id === mergedUser.id ? mergedUser : u))
         );
+        setSelectedUser(null);
         setEditModalOpen(false);
         router.refresh();
       } else {
@@ -211,6 +282,86 @@ export const UsersClient: React.FC<UsersClientProps> = ({
     } finally {
       setEditLoading(false);
     }
+  };
+
+  const handleOpenDelete = (user: any) => {
+    if (user.id === currentUser?.id) {
+      alert("You cannot delete your own Super Admin account.");
+      return;
+    }
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeleteLoading(true);
+
+    try {
+      const res = await fetch(`/api/users/${userToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        locallyDeletedUserIdsRef.current.add(userToDelete.id);
+        locallyUpdatedUsersRef.current.delete(userToDelete.id);
+        setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+        setSelectedUserIds((prev) => prev.filter((id) => id !== userToDelete.id));
+        setDeleteModalOpen(false);
+        setUserToDelete(null);
+        router.refresh();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to delete user.");
+      }
+    } catch (err) {
+      alert("Error deleting user.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const idsToDelete = selectedUserIds.filter((id) => id !== currentUser?.id);
+    if (idsToDelete.length === 0) {
+      alert("No valid users selected for deletion.");
+      return;
+    }
+    setBulkDeleteLoading(true);
+
+    try {
+      for (const id of idsToDelete) {
+        const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          locallyDeletedUserIdsRef.current.add(id);
+          locallyUpdatedUsersRef.current.delete(id);
+        }
+      }
+      setUsers((prev) => prev.filter((u) => !idsToDelete.includes(u.id)));
+      setSelectedUserIds([]);
+      setBulkDeleteModalOpen(false);
+      router.refresh();
+    } catch (err) {
+      alert("Error deleting selected users.");
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  const handleToggleSelectAll = () => {
+    const selectableUsers = filteredUsers.filter((u) => u.id !== currentUser?.id);
+    if (selectedUserIds.length === selectableUsers.length && selectableUsers.length > 0) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(selectableUsers.map((u) => u.id));
+    }
+  };
+
+  const handleToggleSelectUser = (userId: string) => {
+    if (userId === currentUser?.id) return;
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
   };
 
   const handleToggleStatus = async (user: any) => {
@@ -361,12 +512,52 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         </div>
       </div>
 
+      {/* Bulk Action Bar when users are selected */}
+      {selectedUserIds.length > 0 && (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center justify-between text-xs animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 text-rose-900 font-semibold">
+            <span className="bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full text-[11px] font-bold">
+              {selectedUserIds.length}
+            </span>
+            <span>member{selectedUserIds.length > 1 ? "s" : ""} selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedUserIds([])}
+              className="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white text-xs font-medium transition-colors"
+            >
+              Deselect All
+            </button>
+            <button
+              onClick={() => setBulkDeleteModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Users Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="py-3 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all members"
+                    checked={
+                      filteredUsers.filter((u) => u.id !== currentUser?.id).length > 0 &&
+                      selectedUserIds.length ===
+                        filteredUsers.filter((u) => u.id !== currentUser?.id).length
+                    }
+                    onChange={handleToggleSelectAll}
+                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  />
+                </th>
                 <th className="py-3 px-4">Member Name & ID</th>
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4">Department</th>
@@ -377,85 +568,128 @@ export const UsersClient: React.FC<UsersClientProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar user={u} size="sm" />
-                      <div>
-                        <div className="font-bold text-slate-900 text-sm">{u.fullName}</div>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                          <span className="font-mono">{u.employeeId}</span>
-                          <span>•</span>
-                          <span>{u.email}</span>
+              {filteredUsers.map((u) => {
+                const isCurrent = u.id === currentUser?.id;
+                const isSelected = selectedUserIds.includes(u.id);
+
+                return (
+                  <tr
+                    key={u.id}
+                    className={`transition-colors ${
+                      isSelected ? "bg-rose-50/40 hover:bg-rose-50/60" : "hover:bg-slate-50/70"
+                    }`}
+                  >
+                    <td className="py-3.5 px-3 text-center">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${u.fullName}`}
+                        disabled={isCurrent}
+                        checked={isSelected}
+                        onChange={() => handleToggleSelectUser(u.id)}
+                        className={`w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 ${
+                          isCurrent ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
+                        }`}
+                        title={isCurrent ? "Cannot select own account" : undefined}
+                      />
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar user={u} size="sm" />
+                        <div>
+                          <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                            <span>{u.fullName}</span>
+                            {isCurrent && (
+                              <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                            <span className="font-mono">{u.employeeId}</span>
+                            <span>•</span>
+                            <span>{u.email}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <Badge variant={u.role === "SUPER_ADMIN" ? "brand" : "default"}>{u.role}</Badge>
-                  </td>
+                    <td className="py-3.5 px-4">
+                      <Badge variant={u.role === "SUPER_ADMIN" ? "brand" : "default"}>{u.role}</Badge>
+                    </td>
 
-                  <td className="py-3.5 px-4 text-slate-700">
-                    {u.department?.name ||
-                      departments.find((d) => d.id === u.departmentId)?.name ||
-                      "Unassigned"}
-                  </td>
+                    <td className="py-3.5 px-4 text-slate-700">
+                      {u.department?.name ||
+                        departments.find((d) => d.id === u.departmentId)?.name ||
+                        "Unassigned"}
+                    </td>
 
-                  <td className="py-3.5 px-4 font-medium text-slate-800">{u.designation || "—"}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-800">{u.designation || "—"}</td>
 
-                  <td className="py-3.5 px-4 text-slate-600">
-                    <span className="font-semibold text-slate-800">{u._count?.assignedTasks || 0}</span> tasks •{" "}
-                    <span className="font-semibold text-slate-800">{u._count?.projectMemberships || 0}</span> projects
-                  </td>
+                    <td className="py-3.5 px-4 text-slate-600">
+                      <span className="font-semibold text-slate-800">{u._count?.assignedTasks || 0}</span> tasks •{" "}
+                      <span className="font-semibold text-slate-800">{u._count?.projectMemberships || 0}</span> projects
+                    </td>
 
-                  <td className="py-3.5 px-4">
-                    <Badge variant={u.accountStatus === "ACTIVE" ? "brand" : "danger"}>
-                      {u.accountStatus}
-                    </Badge>
-                  </td>
+                    <td className="py-3.5 px-4">
+                      <Badge variant={u.accountStatus === "ACTIVE" ? "brand" : "danger"}>
+                        {u.accountStatus}
+                      </Badge>
+                    </td>
 
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => handleOpenEdit(u)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                        title="Edit User"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit(u)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                          title="Edit User"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
 
-                      <button
-                        onClick={() => {
-                          setResetPassUser(u);
-                          setResetModalOpen(true);
-                        }}
-                        className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50"
-                        title="Reset Password"
-                      >
-                        <KeyRound className="w-3.5 h-3.5" />
-                      </button>
+                        <button
+                          onClick={() => {
+                            setResetPassUser(u);
+                            setResetModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
+                          title="Reset Password"
+                        >
+                          <KeyRound className="w-3.5 h-3.5" />
+                        </button>
 
-                      <button
-                        onClick={() => handleToggleStatus(u)}
-                        className={`p-1.5 rounded-lg ${
-                          u.accountStatus === "ACTIVE"
-                            ? "text-rose-600 hover:bg-rose-50"
-                            : "text-emerald-600 hover:bg-emerald-50"
-                        }`}
-                        title={u.accountStatus === "ACTIVE" ? "Suspend Account" : "Activate Account"}
-                      >
-                        {u.accountStatus === "ACTIVE" ? (
-                          <Ban className="w-3.5 h-3.5" />
-                        ) : (
-                          <UserCheck className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            u.accountStatus === "ACTIVE"
+                              ? "text-rose-600 hover:bg-rose-50"
+                              : "text-emerald-600 hover:bg-emerald-50"
+                          }`}
+                          title={u.accountStatus === "ACTIVE" ? "Suspend Account" : "Activate Account"}
+                        >
+                          {u.accountStatus === "ACTIVE" ? (
+                            <Ban className="w-3.5 h-3.5" />
+                          ) : (
+                            <UserCheck className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenDelete(u)}
+                          disabled={isCurrent}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isCurrent
+                              ? "text-slate-300 cursor-not-allowed"
+                              : "text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          }`}
+                          title={isCurrent ? "Cannot delete yourself" : "Delete User from Organization"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -722,6 +956,122 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           </form>
         </Modal>
       )}
+
+      {/* ================= DELETE USER MODAL ================= */}
+      {userToDelete && (
+        <Modal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            if (!deleteLoading) {
+              setDeleteModalOpen(false);
+              setUserToDelete(null);
+            }
+          }}
+          title="Delete Team Member"
+          subtitle="Permanently remove user account and credentials from the organization."
+          maxWidth="sm"
+        >
+          <div className="space-y-4 text-xs">
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5 text-rose-800">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-rose-900">This action cannot be undone.</p>
+                <p className="mt-0.5 text-rose-700 text-[11px]">
+                  All permissions, assigned workload, and access credentials for this member will be permanently removed.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+              <UserAvatar user={userToDelete} size="md" />
+              <div>
+                <div className="font-bold text-slate-900 text-sm">{userToDelete.fullName}</div>
+                <div className="text-slate-500 font-mono text-xs">{userToDelete.employeeId}</div>
+                <div className="text-slate-600 text-[11px] mt-0.5">
+                  {userToDelete.designation || userToDelete.role} • {userToDelete.email}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setUserToDelete(null);
+                }}
+                className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDelete}
+                className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{deleteLoading ? "Deleting Member..." : "Permanently Delete"}</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ================= BULK DELETE MODAL ================= */}
+      <Modal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => {
+          if (!bulkDeleteLoading) setBulkDeleteModalOpen(false);
+        }}
+        title="Delete Selected Members"
+        subtitle={`Permanently remove ${selectedUserIds.length} selected member(s) from the organization.`}
+        maxWidth="sm"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5 text-rose-800">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-rose-900">Warning: Permanent Deletion</p>
+              <p className="mt-0.5 text-rose-700 text-[11px]">
+                You are about to permanently delete {selectedUserIds.length} member(s). This cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <div className="max-h-40 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl bg-slate-50/50 p-1">
+            {users
+              .filter((u) => selectedUserIds.includes(u.id))
+              .map((u) => (
+                <div key={u.id} className="p-2 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-800">{u.fullName}</span>
+                  <span className="text-slate-500 font-mono text-[11px]">{u.employeeId}</span>
+                </div>
+              ))}
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={bulkDeleteLoading}
+              onClick={() => setBulkDeleteModalOpen(false)}
+              className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={bulkDeleteLoading}
+              onClick={handleBulkDelete}
+              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{bulkDeleteLoading ? "Deleting Members..." : `Delete ${selectedUserIds.length} Members`}</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

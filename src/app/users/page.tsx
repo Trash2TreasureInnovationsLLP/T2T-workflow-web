@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { UsersClient } from "./UsersClient";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function UsersPage() {
   const user = await getCurrentUser();

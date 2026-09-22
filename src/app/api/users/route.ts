@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
@@ -155,6 +156,9 @@ export async function POST(req: Request) {
       newValue: `Role: ${role}, Department: ${newUser.department?.name || "None"}`,
       details: `Created by ${user.fullName}. Temporary credentials issued.`,
     });
+
+    revalidatePath("/users");
+    revalidatePath("/api/users");
 
     return NextResponse.json(
       {

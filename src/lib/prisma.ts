@@ -39,6 +39,7 @@ if (isServerless && !fs.existsSync(localDbPath)) {
 
 let activeSyncPromise: Promise<void> | null = null;
 let activeUploadPromise: Promise<void> | null = null;
+let hasPendingUpload = false;
 
 export async function syncDatabaseFromCloud(force = false): Promise<void> {
   // Cloud sync runs in serverless environment or when explicitly forced
@@ -101,7 +102,10 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
 export async function syncDatabaseToCloud(): Promise<void> {
   if (!fs.existsSync(localDbPath)) return;
 
-  if (activeUploadPromise) return activeUploadPromise;
+  if (activeUploadPromise) {
+    hasPendingUpload = true;
+    return activeUploadPromise;
+  }
 
   activeUploadPromise = (async () => {
     try {
@@ -130,6 +134,10 @@ export async function syncDatabaseToCloud(): Promise<void> {
       console.error("[CloudDB] Error uploading database to cloud:", err);
     } finally {
       activeUploadPromise = null;
+      if (hasPendingUpload) {
+        hasPendingUpload = false;
+        syncDatabaseToCloud();
+      }
     }
   })();
 
