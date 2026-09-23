@@ -7,6 +7,8 @@ declare global {
   var prisma: PrismaClient | undefined;
   var __lastKnownCloudTimestamp: string | null | undefined;
   var __lastCheckedCloudTime: number | undefined;
+  var __lastLocalWriteTime: number | undefined;
+  var __debounceUploadTimer: NodeJS.Timeout | undefined;
 }
 
 const isServerless = Boolean(
@@ -39,15 +41,21 @@ if (isServerless && !fs.existsSync(localDbPath)) {
 
 let activeSyncPromise: Promise<void> | null = null;
 let activeUploadPromise: Promise<void> | null = null;
-let hasPendingUpload = false;
 
 export async function syncDatabaseFromCloud(force = false): Promise<void> {
-  // Cloud sync runs in serverless environment or when explicitly forced
   if (!isServerless && !force) return;
 
   const now = Date.now();
+  const lastWrite = global.__lastLocalWriteTime || 0;
+
+  // Never overwrite local database if we recently wrote to it locally (prevents resurrecting deleted records on refresh)
+  if (!force && now - lastWrite < 15000) {
+    return;
+  }
+
   const lastCheck = global.__lastCheckedCloudTime || 0;
-  if (!force && now - lastCheck < 2500) {
+  // Throttle checking cloud storage to once every 15 seconds to eliminate query lag
+  if (!force && now - lastCheck < 15000) {
     return;
   }
   global.__lastCheckedCloudTime = now;
@@ -65,14 +73,16 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
       const cloudFile = listData.find((f) => f.name === "dev.db");
       if (!cloudFile) {
         if (fs.existsSync(localDbPath)) {
-          await syncDatabaseToCloud();
+          triggerDebouncedCloudSync();
         }
         return;
       }
 
+      const cloudTimestamp = cloudFile.updated_at ? new Date(cloudFile.updated_at).getTime() : 0;
       const needsDownload =
         !fs.existsSync(localDbPath) ||
-        cloudFile.updated_at !== global.__lastKnownCloudTimestamp;
+        (cloudFile.updated_at !== global.__lastKnownCloudTimestamp &&
+          cloudTimestamp > (global.__lastLocalWriteTime || 0));
 
       if (needsDownload) {
         const { data: fileBlob, error: dlErr } = await supabaseAdmin.storage
@@ -102,10 +112,7 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
 export async function syncDatabaseToCloud(): Promise<void> {
   if (!fs.existsSync(localDbPath)) return;
 
-  if (activeUploadPromise) {
-    hasPendingUpload = true;
-    return activeUploadPromise;
-  }
+  if (activeUploadPromise) return activeUploadPromise;
 
   activeUploadPromise = (async () => {
     try {
@@ -134,14 +141,26 @@ export async function syncDatabaseToCloud(): Promise<void> {
       console.error("[CloudDB] Error uploading database to cloud:", err);
     } finally {
       activeUploadPromise = null;
-      if (hasPendingUpload) {
-        hasPendingUpload = false;
-        syncDatabaseToCloud();
-      }
     }
   })();
 
   return activeUploadPromise;
+}
+
+export function triggerDebouncedCloudSync(): void {
+  if (!isServerless) return;
+  global.__lastLocalWriteTime = Date.now();
+
+  if (global.__debounceUploadTimer) {
+    clearTimeout(global.__debounceUploadTimer);
+  }
+
+  // Coalesce sequential writes into a single background upload
+  global.__debounceUploadTimer = setTimeout(() => {
+    syncDatabaseToCloud().catch((err) => {
+      console.error("[CloudDB] Background sync failed:", err);
+    });
+  }, 500);
 }
 
 const dbUrl = isServerless ? `file:${localDbPath}` : process.env.DATABASE_URL;
@@ -160,6 +179,11 @@ function createPrismaClient(): PrismaClient {
 
   // Attach middleware for persistent cloud synchronization across serverless lambdas
   client.$use(async (params, next) => {
+    // Never interrupt, delay, or block transactions with cloud storage operations
+    if (params.runInTransaction) {
+      return next(params);
+    }
+
     const isRead = [
       "findUnique",
       "findFirst",
@@ -185,8 +209,9 @@ function createPrismaClient(): PrismaClient {
 
     const result = await next(params);
 
+    // After a write, trigger background sync without delaying or blocking the response
     if (isWrite && isServerless) {
-      await syncDatabaseToCloud();
+      triggerDebouncedCloudSync();
     }
 
     return result;
