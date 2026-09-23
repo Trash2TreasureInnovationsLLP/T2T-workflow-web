@@ -196,48 +196,54 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "You cannot delete your own Super Admin account." }, { status: 400 });
     }
 
-    // Clean up or reassign all foreign-key dependencies cleanly in a transaction
-    await prisma.$transaction(async (tx) => {
-      // 1. Subordinates: decouple reportingManager
-      await tx.user.updateMany({
-        where: { reportingManagerId: params.id },
-        data: { reportingManagerId: null },
-      });
+    // Clean up or reassign all foreign-key dependencies cleanly in an extended transaction
+    await prisma.$transaction(
+      async (tx) => {
+        // 1. Subordinates: decouple reportingManager
+        await tx.user.updateMany({
+          where: { reportingManagerId: params.id },
+          data: { reportingManagerId: null },
+        });
 
-      // 2. Project Manager: reassign to acting Super Admin
-      await tx.project.updateMany({
-        where: { managerId: params.id },
-        data: { managerId: user.id },
-      });
+        // 2. Project Manager: reassign to acting Super Admin
+        await tx.project.updateMany({
+          where: { managerId: params.id },
+          data: { managerId: user.id },
+        });
 
-      // 3. Task Assignee: unassign tasks
-      await tx.task.updateMany({
-        where: { assigneeId: params.id },
-        data: { assigneeId: null },
-      });
+        // 3. Task Assignee: unassign tasks
+        await tx.task.updateMany({
+          where: { assigneeId: params.id },
+          data: { assigneeId: null },
+        });
 
-      // 4. Task Creator: reassign to acting Super Admin
-      await tx.task.updateMany({
-        where: { createdById: params.id },
-        data: { createdById: user.id },
-      });
+        // 4. Task Creator: reassign to acting Super Admin
+        await tx.task.updateMany({
+          where: { createdById: params.id },
+          data: { createdById: user.id },
+        });
 
-      // 5. Comments & Attachments
-      await tx.taskComment.deleteMany({ where: { authorId: params.id } });
-      await tx.taskAttachment.deleteMany({ where: { uploadedById: params.id } });
+        // 5. Comments & Attachments
+        await tx.taskComment.deleteMany({ where: { authorId: params.id } });
+        await tx.taskAttachment.deleteMany({ where: { uploadedById: params.id } });
 
-      // 6. Documents & Announcements
-      await tx.document.deleteMany({ where: { uploadedById: params.id } });
-      await tx.announcement.deleteMany({ where: { authorId: params.id } });
+        // 6. Documents & Announcements
+        await tx.document.deleteMany({ where: { uploadedById: params.id } });
+        await tx.announcement.deleteMany({ where: { authorId: params.id } });
 
-      // 7. Memberships, Notifications, Activity Logs
-      await tx.projectMember.deleteMany({ where: { userId: params.id } });
-      await tx.notification.deleteMany({ where: { userId: params.id } });
-      await tx.activityLog.deleteMany({ where: { userId: params.id } });
+        // 7. Memberships, Notifications, Activity Logs
+        await tx.projectMember.deleteMany({ where: { userId: params.id } });
+        await tx.notification.deleteMany({ where: { userId: params.id } });
+        await tx.activityLog.deleteMany({ where: { userId: params.id } });
 
-      // 8. Delete user record
-      await tx.user.delete({ where: { id: params.id } });
-    });
+        // 8. Delete user record
+        await tx.user.delete({ where: { id: params.id } });
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      }
+    );
 
     await logActivity({
       userId: user.id,
