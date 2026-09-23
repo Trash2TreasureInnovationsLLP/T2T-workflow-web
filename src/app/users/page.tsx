@@ -2,7 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseFromCloud } from "@/lib/prisma";
 import { AppShell } from "@/components/layout/AppShell";
 import { UsersClient } from "./UsersClient";
 
@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function UsersPage() {
+  await syncDatabaseFromCloud();
+
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.mustChangePassword) redirect("/change-password");

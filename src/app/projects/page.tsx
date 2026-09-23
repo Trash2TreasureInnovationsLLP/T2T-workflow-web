@@ -1,13 +1,15 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseFromCloud } from "@/lib/prisma";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProjectsClient } from "./ProjectsClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
+  await syncDatabaseFromCloud();
+
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.mustChangePassword) redirect("/change-password");

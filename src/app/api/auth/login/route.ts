@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseFromCloud } from "@/lib/prisma";
 import { verifyPassword, signToken, TOKEN_COOKIE_NAME } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
+    await syncDatabaseFromCloud();
+
     const { identifier, password } = await req.json();
 
     if (!identifier || !password) {

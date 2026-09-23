@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -66,6 +66,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       newValue: updated.status,
       details: `Sprint updated by ${user.fullName}`,
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(updated);
   } catch (error) {

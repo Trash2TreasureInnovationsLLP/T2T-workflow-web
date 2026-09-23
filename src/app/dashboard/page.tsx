@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseFromCloud } from "@/lib/prisma";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge, PriorityBadge, StatusBadge } from "@/components/ui/Badge";
@@ -28,6 +28,8 @@ import { calculateTaskPoints } from "@/lib/scoring";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await syncDatabaseFromCloud();
+
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.mustChangePassword) redirect("/change-password");

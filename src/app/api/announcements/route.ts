@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -8,6 +8,8 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await syncDatabaseFromCloud();
 
     const announcements = await prisma.announcement.findMany({
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
@@ -71,6 +73,8 @@ export async function POST(req: Request) {
       newValue: `Priority: ${priority}`,
       details: `Published by ${user.fullName}`,
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(announcement, { status: 201 });
   } catch (error) {

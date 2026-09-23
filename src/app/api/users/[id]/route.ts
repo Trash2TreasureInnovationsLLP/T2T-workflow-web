@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -170,6 +170,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     revalidatePath("/users");
     revalidatePath("/api/users");
 
+    await syncDatabaseToCloud();
+
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("User PATCH error:", error);
@@ -256,6 +258,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     revalidatePath("/users");
     revalidatePath("/api/users");
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true, deletedId: params.id });
   } catch (error: any) {

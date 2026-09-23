@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -120,6 +120,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     }
 
+    await syncDatabaseToCloud();
+
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("Task PATCH error:", error);
@@ -176,6 +178,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       details: `Task updated by ${user.fullName}`,
     });
 
+    await syncDatabaseToCloud();
+
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("Task PUT error:", error);
@@ -206,6 +210,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       objectTitle: `${task.taskId}: ${task.title}`,
       details: `Deleted by ${user.fullName}`,
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true });
   } catch (error) {

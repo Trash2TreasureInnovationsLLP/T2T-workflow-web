@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, hashPassword, verifyPassword, signToken, TOKEN_COOKIE_NAME } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { logActivity } from "@/lib/audit";
 
 export async function POST(req: Request) {
@@ -67,6 +67,8 @@ export async function POST(req: Request) {
       ...user,
       mustChangePassword: false,
     };
+
+    await syncDatabaseToCloud();
 
     const token = signToken(updatedUser);
 

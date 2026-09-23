@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
@@ -28,6 +28,8 @@ export async function PATCH() {
       where: { userId: user.id, read: false },
       data: { read: true },
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true });
   } catch (error) {

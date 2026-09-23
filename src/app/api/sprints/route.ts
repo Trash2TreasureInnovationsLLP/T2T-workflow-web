@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -8,6 +8,8 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await syncDatabaseFromCloud();
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId");
@@ -105,6 +107,8 @@ export async function POST(req: Request) {
       newValue: status,
       details: `Created by ${user.fullName} for project ${newSprint.project.name}`,
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(newSprint, { status: 201 });
   } catch (error) {

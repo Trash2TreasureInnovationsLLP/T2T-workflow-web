@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
 
@@ -7,6 +7,8 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await syncDatabaseFromCloud();
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
@@ -95,6 +97,8 @@ export async function POST(req: Request) {
       newValue: doc.fileName,
       details: `Uploaded by ${user.fullName}`,
     });
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(doc, { status: 201 });
   } catch (error) {

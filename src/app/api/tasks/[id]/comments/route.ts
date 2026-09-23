@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 
@@ -43,6 +43,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         link: `/tasks?highlight=${task.id}`,
       });
     }
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {

@@ -8,7 +8,6 @@ declare global {
   var __lastKnownCloudTimestamp: string | null | undefined;
   var __lastCheckedCloudTime: number | undefined;
   var __lastLocalWriteTime: number | undefined;
-  var __debounceUploadTimer: NodeJS.Timeout | undefined;
 }
 
 const isServerless = Boolean(
@@ -48,14 +47,14 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
   const now = Date.now();
   const lastWrite = global.__lastLocalWriteTime || 0;
 
-  // Never overwrite local database if we recently wrote to it locally (prevents resurrecting deleted records on refresh)
-  if (!force && now - lastWrite < 15000) {
+  // Never overwrite local database if we recently wrote to it locally on this container
+  if (!force && now - lastWrite < 5000) {
     return;
   }
 
   const lastCheck = global.__lastCheckedCloudTime || 0;
-  // Throttle checking cloud storage to once every 15 seconds to eliminate query lag
-  if (!force && now - lastCheck < 15000) {
+  // Throttle checking cloud storage to once every 5 seconds if local db exists
+  if (!force && fs.existsSync(localDbPath) && now - lastCheck < 5000) {
     return;
   }
   global.__lastCheckedCloudTime = now;
@@ -71,12 +70,7 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
       if (listErr || !listData) return;
 
       const cloudFile = listData.find((f) => f.name === "dev.db");
-      if (!cloudFile) {
-        if (fs.existsSync(localDbPath)) {
-          triggerDebouncedCloudSync();
-        }
-        return;
-      }
+      if (!cloudFile) return;
 
       const cloudTimestamp = cloudFile.updated_at ? new Date(cloudFile.updated_at).getTime() : 0;
       const needsDownload =
@@ -117,24 +111,16 @@ export async function syncDatabaseToCloud(): Promise<void> {
   activeUploadPromise = (async () => {
     try {
       const buffer = fs.readFileSync(localDbPath);
-      const { data: listData } = await supabaseAdmin.storage
+      const { error } = await supabaseAdmin.storage
         .from("t2t-assets")
-        .list("database");
+        .upload("database/dev.db", buffer, { upsert: true, cacheControl: "0" });
 
-      const exists = listData?.some((f) => f.name === "dev.db");
-      let res;
-      if (exists) {
-        res = await supabaseAdmin.storage
-          .from("t2t-assets")
-          .update("database/dev.db", buffer, { cacheControl: "0" });
+      if (error) {
+        console.error("[CloudDB] Error uploading database to cloud:", error);
       } else {
-        res = await supabaseAdmin.storage
-          .from("t2t-assets")
-          .upload("database/dev.db", buffer, { upsert: true, cacheControl: "0" });
-      }
-
-      if (res?.data) {
-        global.__lastKnownCloudTimestamp = new Date().toISOString();
+        const nowIso = new Date().toISOString();
+        global.__lastKnownCloudTimestamp = nowIso;
+        global.__lastLocalWriteTime = Date.now();
         console.log(`[CloudDB] Persisted ${buffer.length} bytes to cloud storage`);
       }
     } catch (err) {
@@ -147,26 +133,10 @@ export async function syncDatabaseToCloud(): Promise<void> {
   return activeUploadPromise;
 }
 
-export function triggerDebouncedCloudSync(): void {
-  if (!isServerless) return;
-  global.__lastLocalWriteTime = Date.now();
-
-  if (global.__debounceUploadTimer) {
-    clearTimeout(global.__debounceUploadTimer);
-  }
-
-  // Coalesce sequential writes into a single background upload
-  global.__debounceUploadTimer = setTimeout(() => {
-    syncDatabaseToCloud().catch((err) => {
-      console.error("[CloudDB] Background sync failed:", err);
-    });
-  }, 500);
-}
-
 const dbUrl = isServerless ? `file:${localDbPath}` : process.env.DATABASE_URL;
 
 function createPrismaClient(): PrismaClient {
-  const client = new PrismaClient({
+  return new PrismaClient({
     datasources: dbUrl
       ? {
           db: {
@@ -176,48 +146,6 @@ function createPrismaClient(): PrismaClient {
       : undefined,
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
-
-  // Attach middleware for persistent cloud synchronization across serverless lambdas
-  client.$use(async (params, next) => {
-    // Never interrupt, delay, or block transactions with cloud storage operations
-    if (params.runInTransaction) {
-      return next(params);
-    }
-
-    const isRead = [
-      "findUnique",
-      "findFirst",
-      "findMany",
-      "count",
-      "aggregate",
-      "groupBy",
-    ].includes(params.action);
-
-    const isWrite = [
-      "create",
-      "createMany",
-      "update",
-      "updateMany",
-      "delete",
-      "deleteMany",
-      "upsert",
-    ].includes(params.action);
-
-    if (isRead && isServerless) {
-      await syncDatabaseFromCloud();
-    }
-
-    const result = await next(params);
-
-    // After a write, trigger background sync without delaying or blocking the response
-    if (isWrite && isServerless) {
-      triggerDebouncedCloudSync();
-    }
-
-    return result;
-  });
-
-  return client;
 }
 
 export const prisma = global.prisma || createPrismaClient();

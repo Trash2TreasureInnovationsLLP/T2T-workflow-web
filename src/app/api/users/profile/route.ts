@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, signToken, TOKEN_COOKIE_NAME } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { logActivity } from "@/lib/audit";
 import { SessionUser } from "@/lib/types";
 
@@ -139,6 +139,8 @@ export async function PATCH(req: NextRequest) {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
+
+    await syncDatabaseToCloud();
 
     return response;
   } catch (error: any) {

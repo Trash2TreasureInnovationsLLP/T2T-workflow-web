@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -9,6 +9,8 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await syncDatabaseFromCloud();
 
     const { searchParams } = new URL(req.url);
     const departmentId = searchParams.get("departmentId");
@@ -196,6 +198,8 @@ export async function POST(req: Request) {
 
     revalidatePath("/users");
     revalidatePath("/api/users");
+
+    await syncDatabaseToCloud();
 
     return NextResponse.json(
       {
