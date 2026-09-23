@@ -82,7 +82,9 @@ export async function POST(req: Request) {
       title,
       description,
       projectId,
+      newProjectName,
       sprintId,
+      newSprintName,
       assigneeId,
       priority = "MEDIUM",
       status = "TODO",
@@ -93,11 +95,67 @@ export async function POST(req: Request) {
       blockers = "",
     } = body;
 
-    if (!title || !projectId) {
+    let finalProjectId = projectId;
+
+    // Handle inline new project creation if selected or specified
+    if (newProjectName || projectId === "__NEW__" || (projectId && projectId.startsWith("NEW:"))) {
+      const projName = (newProjectName || projectId.replace(/^NEW:/, "")).trim();
+      if (!projName) {
+        return NextResponse.json({ error: "Project name cannot be empty." }, { status: 400 });
+      }
+
+      let existingProject = await prisma.project.findFirst({
+        where: {
+          OR: [
+            { name: projName },
+            { projectId: projName.toUpperCase() },
+          ],
+        },
+      });
+
+      if (!existingProject) {
+        const prjCount = await prisma.project.count();
+        const pCode = `T2T-PRJ-${String(prjCount + 1).padStart(2, "0")}`;
+        existingProject = await prisma.project.create({
+          data: {
+            projectId: pCode,
+            name: projName,
+            description: `Project initiative: ${projName}`,
+            managerId: user.id,
+            startDate: new Date(),
+            targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: "ACTIVE",
+            priority: "HIGH",
+          },
+        });
+      }
+      finalProjectId = existingProject.id;
+    }
+
+    if (!title || !finalProjectId || finalProjectId === "__NEW__") {
       return NextResponse.json(
         { error: "Task title and project selection are required." },
         { status: 400 }
       );
+    }
+
+    // Handle inline new sprint creation if specified
+    let finalSprintId = sprintId === "__NEW__" ? null : sprintId;
+    if (newSprintName || (sprintId && sprintId.startsWith("NEW:"))) {
+      const sName = (newSprintName || sprintId.replace(/^NEW:/, "")).trim();
+      if (sName) {
+        const newSprint = await prisma.sprint.create({
+          data: {
+            name: sName,
+            goal: `Sprint goal for ${sName}`,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+            status: "ACTIVE",
+            projectId: finalProjectId,
+          },
+        });
+        finalSprintId = newSprint.id;
+      }
     }
 
     // Auto-generate next task ID (e.g. T2T-1001)
@@ -117,8 +175,8 @@ export async function POST(req: Request) {
         taskId,
         title: title.trim(),
         description: description?.trim() || "",
-        projectId,
-        sprintId: sprintId || null,
+        projectId: finalProjectId,
+        sprintId: finalSprintId || null,
         assigneeId: assigneeId || null,
         createdById: user.id,
         priority,

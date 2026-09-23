@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Users,
@@ -27,6 +27,27 @@ interface UsersClientProps {
   currentUser: any;
 }
 
+export const STANDARD_ROLES = [
+  { value: "EMPLOYEE", label: "Employee / Team Member" },
+  { value: "INTERN", label: "Intern" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "TEAM_LEAD", label: "Team Lead" },
+  { value: "OPERATIONS_LEAD", label: "Operations Lead" },
+  { value: "FIELD_MANAGER", label: "Field / Logistics Manager" },
+  { value: "ENGINEER", label: "Engineer / Developer" },
+  { value: "ANALYST", label: "Data / Business Analyst" },
+  { value: "AUDITOR", label: "Auditor / Quality Assurance" },
+  { value: "HR", label: "Human Resources (HR)" },
+  { value: "LEGAL", label: "Legal & Compliance" },
+  { value: "RESEARCHER", label: "Researcher / Circular Scientist" },
+  { value: "COO", label: "Chief Operating Officer (COO)" },
+  { value: "CTO", label: "Chief Technology Officer (CTO)" },
+  { value: "CFO", label: "Chief Financial Officer (CFO)" },
+  { value: "CMO", label: "Chief Marketing Officer (CMO)" },
+  { value: "CAO", label: "Chief Advisory Officer (CAO)" },
+  { value: "SUPER_ADMIN", label: "Super Admin / CEO" },
+];
+
 export const UsersClient: React.FC<UsersClientProps> = ({
   initialUsers,
   departments,
@@ -37,6 +58,17 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("ALL");
+
+  const distinctRoles = useMemo(() => {
+    const rolesMap = new Map<string, string>();
+    STANDARD_ROLES.forEach((r) => rolesMap.set(r.value, r.label));
+    users.forEach((u) => {
+      if (u.role && !rolesMap.has(u.role)) {
+        rolesMap.set(u.role, u.role.replace(/_/g, " "));
+      }
+    });
+    return Array.from(rolesMap.entries()).map(([value, label]) => ({ value, label }));
+  }, [users]);
 
   // Track locally updated and deleted users to avoid stale server revalidation overwriting client state
   const locallyUpdatedUsersRef = React.useRef<Map<string, any>>(new Map());
@@ -102,7 +134,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({
     fullName: "",
     email: "",
     role: "EMPLOYEE",
+    customRole: "",
     departmentId: departments[0]?.id || "",
+    newDepartmentName: "",
     designation: "",
     skills: "",
     temporaryPassword: "T2T@Temp2026!",
@@ -152,10 +186,25 @@ export const UsersClient: React.FC<UsersClientProps> = ({
     setCreateLoading(true);
 
     try {
+      const finalRole =
+        createForm.role === "__CUSTOM__"
+          ? createForm.customRole.trim().toUpperCase().replace(/\s+/g, "_")
+          : createForm.role;
+      const finalDept =
+        createForm.departmentId === "__NEW__"
+          ? createForm.newDepartmentName.trim()
+          : createForm.departmentId;
+
+      const payload = {
+        ...createForm,
+        role: finalRole || "EMPLOYEE",
+        departmentId: finalDept,
+      };
+
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createForm),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -188,7 +237,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           fullName: "",
           email: "",
           role: "EMPLOYEE",
+          customRole: "",
           departmentId: departments[0]?.id || "",
+          newDepartmentName: "",
           designation: "",
           skills: "",
           temporaryPassword: "T2T@Temp2026!",
@@ -210,10 +261,13 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
   const handleOpenEdit = (user: any) => {
     setSelectedUser(user);
+    const isStandard = STANDARD_ROLES.some((r) => r.value === user.role);
     setEditForm({
       fullName: user.fullName || "",
-      role: user.role || "EMPLOYEE",
+      role: isStandard ? (user.role || "EMPLOYEE") : "__CUSTOM__",
+      customRole: isStandard ? "" : (user.role || ""),
       departmentId: user.departmentId || user.department?.id || "",
+      newDepartmentName: "",
       designation: user.designation || "",
       accountStatus: user.accountStatus || "ACTIVE",
     });
@@ -230,12 +284,26 @@ export const UsersClient: React.FC<UsersClientProps> = ({
       return;
     }
 
+    const finalRole = editForm.role === "__CUSTOM__" ? editForm.customRole?.trim() : editForm.role;
+    if (!finalRole) {
+      alert("Role is required.");
+      return;
+    }
+
+    let finalDept = editForm.departmentId;
+    if (finalDept === "__NEW__") {
+      finalDept = "";
+    }
+
     setEditLoading(true);
 
     try {
       const payload = {
         ...editForm,
         fullName: trimmedName,
+        role: finalRole,
+        departmentId: finalDept,
+        newDepartmentName: editForm.departmentId === "__NEW__" ? editForm.newDepartmentName?.trim() : undefined,
         designation: editForm.designation?.trim(),
       };
 
@@ -486,15 +554,11 @@ export const UsersClient: React.FC<UsersClientProps> = ({
             className="text-xs border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-700 focus:ring-1 focus:ring-emerald-500"
           >
             <option value="ALL">All Roles ({users.length})</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
-            <option value="CEO">CEO</option>
-            <option value="COO">COO</option>
-            <option value="CTO">CTO</option>
-            <option value="CFO">CFO</option>
-            <option value="CMO">CMO</option>
-            <option value="CAO">CAO (Advisory)</option>
-            <option value="EMPLOYEE">Employees</option>
-            <option value="INTERN">Interns</option>
+            {distinctRoles.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
           </select>
 
           <select
@@ -743,15 +807,24 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                 onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
                 className="w-full p-2.5 border border-slate-200 rounded-lg bg-white"
               >
-                <option value="EMPLOYEE">Employee / Team Member</option>
-                <option value="INTERN">Intern</option>
-                <option value="COO">COO</option>
-                <option value="CTO">CTO</option>
-                <option value="CFO">CFO</option>
-                <option value="CMO">CMO</option>
-                <option value="CAO">CAO (Advisory)</option>
-                <option value="SUPER_ADMIN">Super Admin / CEO</option>
+                {STANDARD_ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+                <option value="__CUSTOM__">+ Enter Custom Role...</option>
               </select>
+              {createForm.role === "__CUSTOM__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Circular Economy Specialist or QA Lead"
+                  value={createForm.customRole}
+                  onChange={(e) => setCreateForm({ ...createForm, customRole: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
@@ -769,7 +842,19 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                     {d.name}
                   </option>
                 ))}
+                <option value="__NEW__">+ Enter New Department...</option>
               </select>
+              {createForm.departmentId === "__NEW__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Green R&D / Bio-Plastic Innovation"
+                  value={createForm.newDepartmentName}
+                  onChange={(e) => setCreateForm({ ...createForm, newDepartmentName: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
           </div>
 
@@ -845,22 +930,32 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
             <div>
               <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
-                Role
+                Role *
               </label>
               <select
+                required
                 value={editForm.role}
                 onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                 className="w-full p-2.5 border border-slate-200 rounded-lg bg-white"
               >
-                <option value="EMPLOYEE">Employee</option>
-                <option value="INTERN">Intern</option>
-                <option value="COO">COO</option>
-                <option value="CTO">CTO</option>
-                <option value="CFO">CFO</option>
-                <option value="CMO">CMO</option>
-                <option value="CAO">CAO (Advisory)</option>
-                <option value="SUPER_ADMIN">Super Admin / CEO</option>
+                {STANDARD_ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+                <option value="__CUSTOM__">+ Enter Custom Role...</option>
               </select>
+              {editForm.role === "__CUSTOM__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Circular Economy Specialist or QA Lead"
+                  value={editForm.customRole || ""}
+                  onChange={(e) => setEditForm({ ...editForm, customRole: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
@@ -878,7 +973,19 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                     {d.name}
                   </option>
                 ))}
+                <option value="__NEW__">+ Enter New Department...</option>
               </select>
+              {editForm.departmentId === "__NEW__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Green R&D / Bio-Plastic Innovation"
+                  value={editForm.newDepartmentName || ""}
+                  onChange={(e) => setEditForm({ ...editForm, newDepartmentName: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>

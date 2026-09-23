@@ -11,6 +11,9 @@
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:generate": "prisma generate",
+    "db:export-supabase": "node scripts/export-supabase.js",
+    "db:switch-supabase": "node scripts/switch-to-supabase.js enable",
+    "db:switch-sqlite": "node scripts/switch-to-supabase.js sqlite",
     "autopush": "node scripts/autopush.js",
     "push": "node scripts/autopush.js"
   },

@@ -14,3 +14,52 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 });
+
+// S3 Protocol Configuration for Supabase Storage
+export const S3_CONFIG = {
+  endpoint: process.env.S3_ENDPOINT || `${supabaseUrl}/storage/v1/s3`,
+  region: process.env.S3_REGION || "ap-south-1",
+  accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
+  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
+  bucketName: process.env.S3_BUCKET_NAME || "t2t-documents",
+};
+
+// Helper: Upload file or buffer to Supabase Storage
+export async function uploadFileToSupabaseStorage(
+  filePath: string,
+  fileData: Buffer | Uint8Array | Blob | string,
+  contentType: string = "application/octet-stream",
+  bucketName: string = "t2t-documents"
+) {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(filePath, fileData, {
+        contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn("Storage upload notice:", error.message);
+      // Return public URL path format as fallback
+      return {
+        success: false,
+        url: `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`,
+        error: error.message,
+      };
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    return { success: true, url: publicUrlData.publicUrl, path: filePath };
+  } catch (error: any) {
+    console.error("Supabase storage error:", error);
+    return {
+      success: false,
+      url: `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`,
+      error: error.message,
+    };
+  }
+}

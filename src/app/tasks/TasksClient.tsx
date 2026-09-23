@@ -31,8 +31,8 @@ interface TasksClientProps {
 
 export const TasksClient: React.FC<TasksClientProps> = ({
   initialTasks,
-  projects,
-  sprints,
+  projects: initialProjects,
+  sprints: initialSprints,
   users,
   currentUser,
 }) => {
@@ -41,6 +41,8 @@ export const TasksClient: React.FC<TasksClientProps> = ({
   const openCreate = searchParams.get("create") === "true";
 
   const [tasks, setTasks] = useState<any[]>(initialTasks);
+  const [projects, setProjects] = useState<any[]>(initialProjects || []);
+  const [sprints, setSprints] = useState<any[]>(initialSprints || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
@@ -53,7 +55,9 @@ export const TasksClient: React.FC<TasksClientProps> = ({
     title: "",
     description: "",
     projectId: projects[0]?.id || "",
+    newProjectName: "",
     sprintId: "",
+    newSprintName: "",
     assigneeId: "",
     priority: "MEDIUM",
     status: "TODO",
@@ -112,12 +116,20 @@ export const TasksClient: React.FC<TasksClientProps> = ({
       if (res.ok) {
         const newTask = await res.json();
         setTasks((prev) => [newTask, ...prev]);
+        if (newTask.project && !projects.some((p) => p.id === newTask.project.id)) {
+          setProjects((prev) => [...prev, newTask.project]);
+        }
+        if (newTask.sprint && !sprints.some((s) => s.id === newTask.sprint.id)) {
+          setSprints((prev) => [...prev, newTask.sprint]);
+        }
         setCreateModalOpen(false);
         setCreateForm({
           title: "",
           description: "",
           projectId: projects[0]?.id || "",
+          newProjectName: "",
           sprintId: "",
+          newSprintName: "",
           assigneeId: "",
           priority: "MEDIUM",
           status: "TODO",
@@ -437,31 +449,90 @@ export const TasksClient: React.FC<TasksClientProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
-                Project *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-semibold uppercase tracking-wider text-slate-700">
+                  Project *
+                </label>
+                {createForm.projectId === "__NEW__" ? (
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, projectId: projects[0]?.id || "", newProjectName: "" })}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold"
+                  >
+                    Select existing
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, projectId: "__NEW__" })}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold"
+                  >
+                    + Enter New Project
+                  </button>
+                )}
+              </div>
               <select
                 required
                 value={createForm.projectId}
                 onChange={(e) => setCreateForm({ ...createForm, projectId: e.target.value })}
-                className="w-full p-2.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full p-2.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm"
               >
+                <option value="">-- Select Project --</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.projectId})
                   </option>
                 ))}
+                <option value="__NEW__">➕ + Enter / Create New Project...</option>
               </select>
+
+              {createForm.projectId === "__NEW__" && (
+                <div className="mt-2 p-2.5 bg-emerald-50/60 border border-emerald-200 rounded-lg space-y-1">
+                  <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                    New Project Title *
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Automated NIR Segregation Line"
+                    value={createForm.newProjectName}
+                    onChange={(e) => setCreateForm({ ...createForm, newProjectName: e.target.value })}
+                    className="w-full p-2 text-xs border border-emerald-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900"
+                  />
+                  <p className="text-[10px] text-emerald-700">
+                    Will automatically be created and linked to this task.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
-                Sprint (Optional)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-semibold uppercase tracking-wider text-slate-700">
+                  Sprint (Optional)
+                </label>
+                {createForm.sprintId === "__NEW__" ? (
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, sprintId: "", newSprintName: "" })}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold"
+                  >
+                    Select existing
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, sprintId: "__NEW__" })}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold"
+                  >
+                    + Enter New Sprint
+                  </button>
+                )}
+              </div>
               <select
                 value={createForm.sprintId}
                 onChange={(e) => setCreateForm({ ...createForm, sprintId: e.target.value })}
-                className="w-full p-2.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full p-2.5 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm"
               >
                 <option value="">No Sprint (Product Backlog)</option>
                 {sprints.map((s) => (
@@ -469,7 +540,24 @@ export const TasksClient: React.FC<TasksClientProps> = ({
                     {s.name}
                   </option>
                 ))}
+                <option value="__NEW__">➕ + Enter New Sprint...</option>
               </select>
+
+              {createForm.sprintId === "__NEW__" && (
+                <div className="mt-2 p-2.5 bg-emerald-50/60 border border-emerald-200 rounded-lg space-y-1">
+                  <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                    New Sprint Name *
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sprint 15 - Smart AI Calibration"
+                    value={createForm.newSprintName}
+                    onChange={(e) => setCreateForm({ ...createForm, newSprintName: e.target.value })}
+                    className="w-full p-2 text-xs border border-emerald-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

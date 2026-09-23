@@ -6,8 +6,18 @@ export type UserRole =
   | "CFO"
   | "CMO"
   | "CAO"
+  | "MANAGER"
+  | "TEAM_LEAD"
+  | "OPERATIONS_LEAD"
+  | "ENGINEER"
+  | "ANALYST"
+  | "AUDITOR"
+  | "HR"
+  | "LEGAL"
+  | "RESEARCHER"
   | "EMPLOYEE"
-  | "INTERN";
+  | "INTERN"
+  | (string & {});
 
 export type AccountStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
 
@@ -147,6 +157,23 @@ export function getRolePermissions(role: string): PermissionCheck {
         canViewFinancials: true,
         canManageRoles: false,
         isAdvisoryOnly: true,
+      };
+
+    case "MANAGER":
+    case "TEAM_LEAD":
+    case "OPERATIONS_LEAD":
+      return {
+        canManageUsers: false,
+        canManageProjects: true,
+        canManageSprints: true,
+        canCreateTasks: true,
+        canEditAllTasks: true,
+        canViewExecutiveDashboard: true,
+        canViewAuditLogs: false,
+        canPostAnnouncements: true,
+        canViewFinancials: false,
+        canManageRoles: false,
+        isAdvisoryOnly: false,
       };
 
     case "INTERN":

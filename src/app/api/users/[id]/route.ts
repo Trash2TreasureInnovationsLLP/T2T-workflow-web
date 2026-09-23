@@ -84,8 +84,43 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (body.role) {
       updateData.role = body.role;
     }
-    if (body.departmentId !== undefined) {
-      updateData.departmentId = body.departmentId || null;
+    if (body.newDepartmentName && body.newDepartmentName.trim()) {
+      const dName = body.newDepartmentName.trim();
+      let dept = await prisma.department.findFirst({ where: { name: dName } });
+      if (!dept) {
+        const dCode = (dName.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "DEPT") + Math.floor(10 + Math.random() * 90);
+        try {
+          dept = await prisma.department.create({
+            data: { name: dName, code: dCode, description: `${dName} Division` },
+          });
+        } catch (e) {
+          dept = await prisma.department.findFirst({ where: { name: dName } });
+        }
+      }
+      updateData.departmentId = dept ? dept.id : null;
+    } else if (body.departmentId !== undefined) {
+      if (body.departmentId && body.departmentId !== "__NEW__") {
+        let dept = await prisma.department.findUnique({ where: { id: body.departmentId } });
+        if (!dept) {
+          dept = await prisma.department.findFirst({
+            where: { OR: [{ name: body.departmentId }, { code: body.departmentId }] },
+          });
+        }
+        if (!dept && body.departmentId.trim()) {
+          const dName = body.departmentId.trim();
+          const dCode = (dName.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "DEPT") + Math.floor(10 + Math.random() * 90);
+          try {
+            dept = await prisma.department.create({
+              data: { name: dName, code: dCode, description: `${dName} Division` },
+            });
+          } catch (e) {
+            dept = await prisma.department.findFirst({ where: { name: dName } });
+          }
+        }
+        updateData.departmentId = dept ? dept.id : null;
+      } else {
+        updateData.departmentId = null;
+      }
     }
     if (body.designation !== undefined) {
       updateData.designation = body.designation.trim();

@@ -123,6 +123,24 @@ export async function POST(req: Request) {
         });
         if (deptByName) validDeptId = deptByName.id;
       }
+      if (!validDeptId && departmentId.trim() && departmentId !== "__NEW__") {
+        const dName = departmentId.trim();
+        const dCode = (dName.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4) || "DEPT") + Math.floor(10 + Math.random() * 90);
+        try {
+          const newDept = await prisma.department.create({
+            data: {
+              name: dName,
+              code: dCode,
+              description: `${dName} Division`,
+            },
+          });
+          validDeptId = newDept.id;
+        } catch (e) {
+          // If code collided or concurrent, try finding by name
+          const fallback = await prisma.department.findFirst({ where: { name: dName } });
+          if (fallback) validDeptId = fallback.id;
+        }
+      }
     }
 
     const tempPass = temporaryPassword || "T2T@Temp2026!";

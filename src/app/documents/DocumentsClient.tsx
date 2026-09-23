@@ -36,8 +36,18 @@ export const DocumentsClient: React.FC<DocumentsClientProps> = ({
     title: "",
     fileName: "",
     category: "SPEC",
+    customCategory: "",
     projectId: "",
+    newProjectName: "",
   });
+
+  const distinctCategories = React.useMemo(() => {
+    const set = new Set(["SPEC", "PROPOSAL", "SPRINT", "CONTRACT", "GENERAL"]);
+    docs.forEach((d) => {
+      if (d.category) set.add(d.category);
+    });
+    return Array.from(set);
+  }, [docs]);
 
   const filteredDocs = docs.filter((d) => {
     if (categoryFilter !== "ALL" && d.category !== categoryFilter) return false;
@@ -54,22 +64,45 @@ export const DocumentsClient: React.FC<DocumentsClientProps> = ({
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const finalCategory = form.category === "__CUSTOM__" ? form.customCategory.trim() : form.category;
+    if (!finalCategory) {
+      alert("Category is required.");
+      return;
+    }
+
     setUploadLoading(true);
 
     try {
+      const payload = {
+        title: form.title,
+        fileName: form.fileName,
+        category: finalCategory,
+        projectId: form.projectId === "__NEW__" ? "" : form.projectId,
+        newProjectName: form.projectId === "__NEW__" ? form.newProjectName.trim() : undefined,
+      };
+
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         const newDoc = await res.json();
         setDocs([newDoc, ...docs]);
         setUploadModalOpen(false);
-        setForm({ title: "", fileName: "", category: "SPEC", projectId: "" });
+        setForm({
+          title: "",
+          fileName: "",
+          category: "SPEC",
+          customCategory: "",
+          projectId: "",
+          newProjectName: "",
+        });
       } else {
-        alert("Failed to register document");
+        const err = await res.json();
+        alert(err.error || "Failed to register document");
       }
     } catch (err) {
       alert("Error uploading document");
@@ -127,11 +160,11 @@ export const DocumentsClient: React.FC<DocumentsClientProps> = ({
             className="text-xs border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-700 focus:ring-1 focus:ring-emerald-500"
           >
             <option value="ALL">All Categories ({docs.length})</option>
-            <option value="SPEC">Specifications</option>
-            <option value="PROPOSAL">Proposals</option>
-            <option value="SPRINT">Sprint Artifacts</option>
-            <option value="CONTRACT">Compliance & Contracts</option>
-            <option value="GENERAL">General</option>
+            {distinctCategories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -251,7 +284,19 @@ export const DocumentsClient: React.FC<DocumentsClientProps> = ({
                 <option value="SPRINT">Sprint Artifact</option>
                 <option value="CONTRACT">Contract & ESG</option>
                 <option value="GENERAL">General</option>
+                <option value="__CUSTOM__">+ Enter Custom Category...</option>
               </select>
+              {form.category === "__CUSTOM__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Audit Report, Lab Analysis..."
+                  value={form.customCategory}
+                  onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
@@ -269,7 +314,19 @@ export const DocumentsClient: React.FC<DocumentsClientProps> = ({
                     {p.name}
                   </option>
                 ))}
+                <option value="__NEW__">+ Enter New Project...</option>
               </select>
+              {form.projectId === "__NEW__" && (
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Circular Textile Recycling"
+                  value={form.newProjectName}
+                  onChange={(e) => setForm({ ...form, newProjectName: e.target.value })}
+                  className="w-full mt-2 p-2 border border-emerald-300 rounded-lg bg-emerald-50/40 text-xs focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              )}
             </div>
           </div>
 

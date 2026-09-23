@@ -37,21 +37,50 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { title, fileName, fileSize = 204800, fileType = "application/pdf", category = "GENERAL", projectId } = body;
+    const { title, fileName, fileSize = 204800, fileType = "application/pdf", category = "GENERAL", projectId, newProjectName } = body;
 
     if (!title || !fileName) {
       return NextResponse.json({ error: "Title and file name are required." }, { status: 400 });
     }
 
+    let finalProjectId = projectId;
+    if (newProjectName && newProjectName.trim()) {
+      const pName = newProjectName.trim();
+      let proj = await prisma.project.findFirst({ where: { name: pName } });
+      if (!proj) {
+        const prjCount = await prisma.project.count();
+        const pCode = `T2T-PRJ-${String(prjCount + 1).padStart(2, "0")}`;
+        proj = await prisma.project.create({
+          data: {
+            name: pName,
+            projectId: pCode,
+            description: `${pName} Project`,
+            managerId: user.id,
+            startDate: new Date(),
+            targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: "PLANNING",
+          },
+        });
+      }
+      finalProjectId = proj.id;
+    } else if (finalProjectId === "__NEW__" || !finalProjectId) {
+      finalProjectId = null;
+    }
+
+    const cleanFileName = fileName.trim();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://odfgtftcoliyjtiykiom.supabase.co";
+    const bucketName = process.env.S3_BUCKET_NAME || "t2t-documents";
+    const storageUrl = body.fileUrl || `${supabaseUrl}/storage/v1/object/public/${bucketName}/${cleanFileName}`;
+
     const doc = await prisma.document.create({
       data: {
         title: title.trim(),
-        fileName: fileName.trim(),
-        fileUrl: `/uploads/${fileName}`,
+        fileName: cleanFileName,
+        fileUrl: storageUrl,
         fileSize: Number(fileSize) || 102400,
         fileType,
-        category,
-        projectId: projectId || null,
+        category: category.trim(),
+        projectId: finalProjectId,
         uploadedById: user.id,
       },
       include: { uploadedBy: true, project: true },
