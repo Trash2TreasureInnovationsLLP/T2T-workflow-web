@@ -58,6 +58,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("DEFAULT");
 
   const distinctRoles = useMemo(() => {
     const rolesMap = new Map<string, string>();
@@ -103,7 +104,11 @@ export const UsersClient: React.FC<UsersClientProps> = ({
             const serverTime = new Date(serverUser.updatedAt || 0).getTime();
             const localTime = new Date(localUpdated.updatedAt || 0).getTime();
             // If server caught up with our edit
-            if (serverTime >= localTime && serverUser.fullName === localUpdated.fullName) {
+            if (
+              serverTime >= localTime &&
+              serverUser.fullName === localUpdated.fullName &&
+              serverUser.employeeId === localUpdated.employeeId
+            ) {
               locallyUpdatedUsersRef.current.delete(serverUser.id);
               merged.push(serverUser);
             } else {
@@ -133,6 +138,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [createForm, setCreateForm] = useState({
     fullName: "",
     email: "",
+    employeeId: "",
     role: "EMPLOYEE",
     customRole: "",
     departmentId: departments[0]?.id || "",
@@ -166,20 +172,40 @@ export const UsersClient: React.FC<UsersClientProps> = ({
   const [newTempPassword, setNewTempPassword] = useState("T2T@Reset2026!");
   const [resetLoading, setResetLoading] = useState(false);
 
-  const filteredUsers = users.filter((u) => {
-    if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
-    if (deptFilter !== "ALL" && u.departmentId !== deptFilter) return false;
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      return (
-        u.fullName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.employeeId.toLowerCase().includes(q) ||
-        (u.designation && u.designation.toLowerCase().includes(q))
+  const filteredUsers = useMemo(() => {
+    const list = users.filter((u) => {
+      if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+      if (deptFilter !== "ALL" && u.departmentId !== deptFilter) return false;
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase().trim();
+        return (
+          (u.fullName && u.fullName.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          (u.employeeId && u.employeeId.toLowerCase().includes(q)) ||
+          (u.designation && u.designation.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+
+    if (sortBy === "EMP_ID_ASC") {
+      return [...list].sort((a, b) =>
+        (a.employeeId || "").localeCompare(b.employeeId || "", undefined, { numeric: true, sensitivity: "base" })
       );
     }
-    return true;
-  });
+    if (sortBy === "EMP_ID_DESC") {
+      return [...list].sort((a, b) =>
+        (b.employeeId || "").localeCompare(a.employeeId || "", undefined, { numeric: true, sensitivity: "base" })
+      );
+    }
+    if (sortBy === "NAME_ASC") {
+      return [...list].sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
+    }
+    if (sortBy === "NAME_DESC") {
+      return [...list].sort((a, b) => (b.fullName || "").localeCompare(a.fullName || ""));
+    }
+    return list;
+  }, [users, roleFilter, deptFilter, searchTerm, sortBy]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +223,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
       const payload = {
         ...createForm,
+        employeeId: createForm.employeeId.trim() || undefined,
         role: finalRole || "EMPLOYEE",
         departmentId: finalDept,
       };
@@ -236,6 +263,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         setCreateForm({
           fullName: "",
           email: "",
+          employeeId: "",
           role: "EMPLOYEE",
           customRole: "",
           departmentId: departments[0]?.id || "",
@@ -264,6 +292,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
     const isStandard = STANDARD_ROLES.some((r) => r.value === user.role);
     setEditForm({
       fullName: user.fullName || "",
+      employeeId: user.employeeId || "",
       role: isStandard ? (user.role || "EMPLOYEE") : "__CUSTOM__",
       customRole: isStandard ? "" : (user.role || ""),
       departmentId: user.departmentId || user.department?.id || "",
@@ -284,6 +313,12 @@ export const UsersClient: React.FC<UsersClientProps> = ({
       return;
     }
 
+    const trimmedEmpId = editForm.employeeId?.trim();
+    if (!trimmedEmpId) {
+      alert("Employee ID cannot be empty.");
+      return;
+    }
+
     const finalRole = editForm.role === "__CUSTOM__" ? editForm.customRole?.trim() : editForm.role;
     if (!finalRole) {
       alert("Role is required.");
@@ -301,6 +336,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
       const payload = {
         ...editForm,
         fullName: trimmedName,
+        employeeId: trimmedEmpId,
         role: finalRole,
         departmentId: finalDept,
         newDepartmentName: editForm.departmentId === "__NEW__" ? editForm.newDepartmentName?.trim() : undefined,
@@ -324,6 +360,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           ...selectedUser,
           ...updated,
           fullName: trimmedName,
+          employeeId: trimmedEmpId,
           designation: payload.designation || updated.designation,
           role: payload.role || updated.role,
           department: resolvedDept,
@@ -549,6 +586,19 @@ export const UsersClient: React.FC<UsersClientProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="text-xs border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-700 focus:ring-1 focus:ring-emerald-500 font-medium"
+            title="Sort members list"
+          >
+            <option value="DEFAULT">Sort: Recent / Default</option>
+            <option value="EMP_ID_ASC">Employee ID (Low → High / A → Z)</option>
+            <option value="EMP_ID_DESC">Employee ID (High → Low / Z → A)</option>
+            <option value="NAME_ASC">Name (A → Z)</option>
+            <option value="NAME_DESC">Name (Z → A)</option>
+          </select>
+
+          <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="text-xs border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-700 focus:ring-1 focus:ring-emerald-500"
@@ -622,7 +672,19 @@ export const UsersClient: React.FC<UsersClientProps> = ({
                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
                 </th>
-                <th className="py-3 px-4">Member Name & ID</th>
+                <th
+                  className="py-3 px-4 cursor-pointer hover:text-slate-800 transition-colors select-none"
+                  onClick={() => {
+                    setSortBy((prev) => (prev === "EMP_ID_ASC" ? "EMP_ID_DESC" : "EMP_ID_ASC"));
+                  }}
+                  title="Click to sort by Employee ID"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Member Name & ID</span>
+                    {sortBy === "EMP_ID_ASC" && <span className="text-emerald-600 font-bold">▲ ID</span>}
+                    {sortBy === "EMP_ID_DESC" && <span className="text-emerald-600 font-bold">▼ ID</span>}
+                  </div>
+                </th>
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4">Department</th>
                 <th className="py-3 px-4">Designation</th>
@@ -768,18 +830,36 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         maxWidth="lg"
       >
         <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
-              Full Name *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Sravan Varma"
-              value={createForm.fullName}
-              onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
-              className="w-full p-2.5 border border-slate-200 rounded-lg"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Sravan Varma"
+                value={createForm.fullName}
+                onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-semibold uppercase tracking-wider text-slate-700">
+                  Employee ID
+                </label>
+                <span className="text-[11px] text-slate-400 font-normal">Custom / Random</span>
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. T2T-015, EMP-99 (or leave blank to auto-generate)"
+                value={createForm.employeeId}
+                onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs font-mono placeholder:font-sans"
+              />
+            </div>
           </div>
 
           <div>
@@ -915,18 +995,33 @@ export const UsersClient: React.FC<UsersClientProps> = ({
           maxWidth="md"
         >
           <form onSubmit={handleSaveEdit} className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
-                Full Name
+                Full Name *
               </label>
               <input
                 type="text"
                 required
                 value={editForm.fullName}
                 onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                className="w-full p-2.5 border border-slate-200 rounded-lg"
+                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs"
               />
             </div>
+
+            <div>
+              <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                Employee ID *
+              </label>
+              <input
+                type="text"
+                required
+                value={editForm.employeeId || ""}
+                onChange={(e) => setEditForm({ ...editForm, employeeId: e.target.value })}
+                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs font-mono"
+              />
+            </div>
+          </div>
 
             <div>
               <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">

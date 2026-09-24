@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     const {
       fullName,
       email,
+      employeeId: customEmployeeId,
       role = "EMPLOYEE",
       departmentId,
       newDepartmentName,
@@ -94,19 +95,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "A user with this email already exists." }, { status: 400 });
     }
 
-    // Generate safe sequential Employee ID e.g. T2T-002
-    const allUsers = await prisma.user.findMany({
-      select: { employeeId: true },
-    });
-    let maxId = 0;
-    for (const u of allUsers) {
-      const match = u.employeeId?.match(/T2T-(\d+)/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (!isNaN(num) && num > maxId) maxId = num;
+    // Resolve Employee ID: User-provided custom ID or safe fallback generator
+    let employeeId: string;
+    if (customEmployeeId && typeof customEmployeeId === "string" && customEmployeeId.trim().length > 0) {
+      const trimmedEmpId = customEmployeeId.trim();
+      // Check duplicate Employee ID
+      const existingEmp = await prisma.user.findFirst({
+        where: {
+          employeeId: trimmedEmpId,
+        },
+      });
+      if (existingEmp) {
+        return NextResponse.json(
+          { error: `Employee ID "${trimmedEmpId}" is already assigned to ${existingEmp.fullName}. Please specify a unique Employee ID.` },
+          { status: 400 }
+        );
+      }
+      employeeId = trimmedEmpId;
+    } else {
+      // Generate safe sequential Employee ID e.g. T2T-011 if none provided
+      const allUsers = await prisma.user.findMany({
+        select: { employeeId: true },
+      });
+      let maxId = 0;
+      for (const u of allUsers) {
+        const match = u.employeeId?.match(/T2T-(\d+)/i);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxId) maxId = num;
+        }
+      }
+      employeeId = `T2T-${String(maxId + 1).padStart(3, "0")}`;
+      // In case of any collision, find next free slot
+      while (await prisma.user.findUnique({ where: { employeeId } })) {
+        maxId++;
+        employeeId = `T2T-${String(maxId + 1).padStart(3, "0")}`;
       }
     }
-    const employeeId = `T2T-${String(maxId + 1).padStart(3, "0")}`;
 
     // Verify department exists before linking to avoid FK constraint errors
     let validDeptId: string | null = null;

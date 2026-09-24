@@ -123,6 +123,25 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         updateData.departmentId = null;
       }
     }
+    if (body.employeeId !== undefined) {
+      const trimmedEmpId = body.employeeId?.trim();
+      if (!trimmedEmpId) {
+        return NextResponse.json({ error: "Employee ID cannot be empty." }, { status: 400 });
+      }
+      const duplicateEmp = await prisma.user.findFirst({
+        where: {
+          employeeId: trimmedEmpId,
+          NOT: { id: params.id },
+        },
+      });
+      if (duplicateEmp) {
+        return NextResponse.json(
+          { error: `Employee ID "${trimmedEmpId}" is already assigned to ${duplicateEmp.fullName}.` },
+          { status: 400 }
+        );
+      }
+      updateData.employeeId = trimmedEmpId;
+    }
     if (body.designation !== undefined) {
       updateData.designation = body.designation.trim();
     }
