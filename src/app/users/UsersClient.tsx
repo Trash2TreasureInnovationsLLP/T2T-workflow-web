@@ -407,7 +407,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
         method: "DELETE",
       });
 
-      if (res.ok) {
+      if (res.ok || res.status === 404) {
         locallyDeletedUserIdsRef.current.add(userToDelete.id);
         locallyUpdatedUsersRef.current.delete(userToDelete.id);
         setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
@@ -437,7 +437,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({
     try {
       for (const id of idsToDelete) {
         const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-        if (res.ok) {
+        if (res.ok || res.status === 404) {
           locallyDeletedUserIdsRef.current.add(id);
           locallyUpdatedUsersRef.current.delete(id);
         }

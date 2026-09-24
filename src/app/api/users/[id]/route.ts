@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
+import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
@@ -11,7 +11,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const targetUser = await prisma.user.findUnique({
+    await syncDatabaseFromCloud();
+
+    let targetUser = await prisma.user.findUnique({
       where: { id: params.id },
       include: {
         department: true,
@@ -73,8 +75,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json({ error: "Unauthorized. Super Admin only." }, { status: 403 });
     }
 
+    await syncDatabaseFromCloud();
+
     const body = await req.json();
-    const existing = await prisma.user.findUnique({ where: { id: params.id } });
+    let existing = await prisma.user.findUnique({ where: { id: params.id } });
+    if (!existing) {
+      existing = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { employeeId: params.id },
+            { email: params.id.toLowerCase() },
+          ],
+        },
+      });
+    }
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const updateData: any = {};
@@ -212,78 +226,112 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Unauthorized. Super Admin only." }, { status: 403 });
     }
 
-    const targetUser = await prisma.user.findUnique({ where: { id: params.id } });
-    if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    await syncDatabaseFromCloud();
 
-    if (user.id === params.id) {
+    let targetUser = await prisma.user.findUnique({ where: { id: params.id } });
+    if (!targetUser) {
+      targetUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { employeeId: params.id },
+            { email: params.id.toLowerCase() },
+          ],
+        },
+      });
+    }
+
+    // If still not found locally in SQLite, force fresh pull from Supabase Postgres
+    if (!targetUser) {
+      await syncDatabaseFromCloud(true);
+      targetUser =
+        (await prisma.user.findUnique({ where: { id: params.id } })) ||
+        (await prisma.user.findFirst({
+          where: {
+            OR: [
+              { employeeId: params.id },
+              { email: params.id.toLowerCase() },
+            ],
+          },
+        }));
+    }
+
+    const resolvedId = targetUser?.id || params.id;
+
+    if (user.id === resolvedId || user.employeeId === params.id) {
       return NextResponse.json({ error: "You cannot delete your own Super Admin account." }, { status: 400 });
     }
 
-    // Clean up or reassign all foreign-key dependencies cleanly in an extended transaction
-    await prisma.$transaction(
-      async (tx) => {
-        // 1. Subordinates: decouple reportingManager
-        await tx.user.updateMany({
-          where: { reportingManagerId: params.id },
-          data: { reportingManagerId: null },
-        });
+    if (targetUser) {
+      // Clean up or reassign all foreign-key dependencies cleanly in an extended transaction
+      await prisma.$transaction(
+        async (tx) => {
+          // 1. Subordinates: decouple reportingManager
+          await tx.user.updateMany({
+            where: { reportingManagerId: resolvedId },
+            data: { reportingManagerId: null },
+          });
 
-        // 2. Project Manager: reassign to acting Super Admin
-        await tx.project.updateMany({
-          where: { managerId: params.id },
-          data: { managerId: user.id },
-        });
+          // 2. Project Manager: reassign to acting Super Admin
+          await tx.project.updateMany({
+            where: { managerId: resolvedId },
+            data: { managerId: user.id },
+          });
 
-        // 3. Task Assignee: unassign tasks
-        await tx.task.updateMany({
-          where: { assigneeId: params.id },
-          data: { assigneeId: null },
-        });
+          // 3. Task Assignee: unassign tasks
+          await tx.task.updateMany({
+            where: { assigneeId: resolvedId },
+            data: { assigneeId: null },
+          });
 
-        // 4. Task Creator: reassign to acting Super Admin
-        await tx.task.updateMany({
-          where: { createdById: params.id },
-          data: { createdById: user.id },
-        });
+          // 4. Task Creator: reassign to acting Super Admin
+          await tx.task.updateMany({
+            where: { createdById: resolvedId },
+            data: { createdById: user.id },
+          });
 
-        // 5. Comments & Attachments
-        await tx.taskComment.deleteMany({ where: { authorId: params.id } });
-        await tx.taskAttachment.deleteMany({ where: { uploadedById: params.id } });
+          // 5. Comments & Attachments
+          await tx.taskComment.deleteMany({ where: { authorId: resolvedId } });
+          await tx.taskAttachment.deleteMany({ where: { uploadedById: resolvedId } });
 
-        // 6. Documents & Announcements
-        await tx.document.deleteMany({ where: { uploadedById: params.id } });
-        await tx.announcement.deleteMany({ where: { authorId: params.id } });
+          // 6. Documents & Announcements
+          await tx.document.deleteMany({ where: { uploadedById: resolvedId } });
+          await tx.announcement.deleteMany({ where: { authorId: resolvedId } });
 
-        // 7. Memberships, Notifications, Activity Logs
-        await tx.projectMember.deleteMany({ where: { userId: params.id } });
-        await tx.notification.deleteMany({ where: { userId: params.id } });
-        await tx.activityLog.deleteMany({ where: { userId: params.id } });
+          // 7. Memberships, Notifications, Activity Logs
+          await tx.projectMember.deleteMany({ where: { userId: resolvedId } });
+          await tx.notification.deleteMany({ where: { userId: resolvedId } });
+          await tx.activityLog.deleteMany({ where: { userId: resolvedId } });
 
-        // 8. Delete user record
-        await tx.user.delete({ where: { id: params.id } });
-      },
-      {
-        maxWait: 10000,
-        timeout: 30000,
-      }
-    );
+          // 8. Delete user record
+          await tx.user.delete({ where: { id: resolvedId } });
+        },
+        {
+          maxWait: 10000,
+          timeout: 30000,
+        }
+      );
 
-    await logActivity({
-      userId: user.id,
-      action: "DELETED",
-      objectType: "USER",
-      objectId: params.id,
-      objectTitle: `${targetUser.fullName} (${targetUser.employeeId})`,
-      details: `User permanently deleted by ${user.fullName}`,
-    });
+      await logActivity({
+        userId: user.id,
+        action: "DELETED",
+        objectType: "USER",
+        objectId: resolvedId,
+        objectTitle: `${targetUser.fullName} (${targetUser.employeeId})`,
+        details: `User permanently deleted by ${user.fullName}`,
+      });
+    }
+
+    // Always delete from Supabase PostgreSQL directly too
+    await deleteUserFromSupabase(resolvedId);
+    if (resolvedId !== params.id) {
+      await deleteUserFromSupabase(params.id);
+    }
+    await syncDatabaseToCloud();
 
     revalidatePath("/users");
     revalidatePath("/api/users");
 
-    await deleteUserFromSupabase(params.id);
-    await syncDatabaseToCloud();
-
-    return NextResponse.json({ success: true, deletedId: params.id });
+    return NextResponse.json({ success: true, deletedId: resolvedId });
   } catch (error: any) {
     console.error("User DELETE error:", error);
     return NextResponse.json({ error: error?.message || "Failed to delete user." }, { status: 500 });

@@ -47,11 +47,30 @@ export async function syncUserToSupabase(user: any): Promise<void> {
 
 export async function deleteUserFromSupabase(userId: string): Promise<void> {
   try {
-    const { error } = await supabaseAdmin.from("User").delete().eq("id", userId);
-    if (error) {
-      console.error("[SupabasePostgres] Failed to delete user:", error.message);
-    } else {
-      console.log(`[SupabasePostgres] Deleted user ${userId}`);
+    const { data: users } = await supabaseAdmin
+      .from("User")
+      .select("id")
+      .or(`id.eq.${userId},employeeId.eq.${userId}`);
+
+    const targetIds = users && users.length > 0 ? users.map((u: any) => u.id) : [userId];
+
+    for (const id of targetIds) {
+      await supabaseAdmin.from("User").update({ reportingManagerId: null }).eq("reportingManagerId", id);
+      await supabaseAdmin.from("ProjectMember").delete().eq("userId", id);
+      await supabaseAdmin.from("Notification").delete().eq("userId", id);
+      await supabaseAdmin.from("ActivityLog").delete().eq("userId", id);
+      await supabaseAdmin.from("TaskComment").delete().eq("authorId", id);
+      await supabaseAdmin.from("TaskAttachment").delete().eq("uploadedById", id);
+      await supabaseAdmin.from("Document").delete().eq("uploadedById", id);
+      await supabaseAdmin.from("Announcement").delete().eq("authorId", id);
+      await supabaseAdmin.from("Task").update({ assigneeId: null }).eq("assigneeId", id);
+
+      const { error } = await supabaseAdmin.from("User").delete().eq("id", id);
+      if (error) {
+        console.error("[SupabasePostgres] Failed to delete user:", error.message);
+      } else {
+        console.log(`[SupabasePostgres] Deleted user ${id}`);
+      }
     }
   } catch (err) {
     console.error("[SupabasePostgres] deleteUserFromSupabase error:", err);
