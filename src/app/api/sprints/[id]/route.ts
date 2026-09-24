@@ -3,6 +3,7 @@ import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncSprintToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -67,6 +68,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       details: `Sprint updated by ${user.fullName}`,
     });
 
+    await syncSprintToSupabase(updated);
     await syncDatabaseToCloud();
 
     return NextResponse.json(updated);

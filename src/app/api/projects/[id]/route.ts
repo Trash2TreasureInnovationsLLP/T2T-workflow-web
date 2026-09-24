@@ -3,6 +3,7 @@ import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncProjectToSupabase, deleteProjectFromSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -104,6 +105,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       details: `Updated by ${user.fullName}`,
     });
 
+    await syncProjectToSupabase(updated);
     await syncDatabaseToCloud();
 
     return NextResponse.json(updated);
@@ -137,6 +139,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       details: `Deleted by ${user.fullName}`,
     });
 
+    await deleteProjectFromSupabase(params.id);
     await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true });

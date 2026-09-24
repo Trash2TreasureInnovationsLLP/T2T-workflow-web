@@ -4,6 +4,7 @@ import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncUserToSupabase, deleteUserFromSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -170,6 +171,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     revalidatePath("/users");
     revalidatePath("/api/users");
 
+    await syncUserToSupabase(updatedUser);
     await syncDatabaseToCloud();
 
     return NextResponse.json(updatedUser);
@@ -259,6 +261,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     revalidatePath("/users");
     revalidatePath("/api/users");
 
+    await deleteUserFromSupabase(params.id);
     await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true, deletedId: params.id });

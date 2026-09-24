@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { supabaseAdmin } from "./supabase";
+import { syncAllToSupabasePostgres } from "./supabaseDbSync";
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -122,6 +123,9 @@ export async function syncDatabaseToCloud(): Promise<void> {
         global.__lastKnownCloudTimestamp = nowIso;
         global.__lastLocalWriteTime = Date.now();
         console.log(`[CloudDB] Persisted ${buffer.length} bytes to cloud storage`);
+
+        // Also ensure Supabase Postgres tables are synchronized
+        await syncAllToSupabasePostgres().catch((e) => console.error("[SupabasePostgres] Sync failed:", e));
       }
     } catch (err) {
       console.error("[CloudDB] Error uploading database to cloud:", err);

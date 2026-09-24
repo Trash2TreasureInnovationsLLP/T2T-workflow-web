@@ -3,6 +3,7 @@ import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncSprintToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request) {
   try {
@@ -108,6 +109,7 @@ export async function POST(req: Request) {
       details: `Created by ${user.fullName} for project ${newSprint.project.name}`,
     });
 
+    await syncSprintToSupabase(newSprint);
     await syncDatabaseToCloud();
 
     return NextResponse.json(newSprint, { status: 201 });

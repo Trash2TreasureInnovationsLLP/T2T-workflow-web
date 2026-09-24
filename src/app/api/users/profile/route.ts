@@ -3,6 +3,7 @@ import { getCurrentUser, signToken, TOKEN_COOKIE_NAME } from "@/lib/auth";
 import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { logActivity } from "@/lib/audit";
 import { SessionUser } from "@/lib/types";
+import { syncUserToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET() {
   try {
@@ -140,6 +141,7 @@ export async function PATCH(req: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
+    await syncUserToSupabase(updatedDbUser);
     await syncDatabaseToCloud();
 
     return response;

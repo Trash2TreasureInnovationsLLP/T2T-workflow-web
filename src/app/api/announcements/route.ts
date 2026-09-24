@@ -3,6 +3,7 @@ import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma
 import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncAnnouncementToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET() {
   try {
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
       details: `Published by ${user.fullName}`,
     });
 
+    await syncAnnouncementToSupabase(announcement);
     await syncDatabaseToCloud();
 
     return NextResponse.json(announcement, { status: 201 });

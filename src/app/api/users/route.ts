@@ -4,6 +4,7 @@ import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
+import { syncUserToSupabase, syncDepartmentToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request) {
   try {
@@ -199,6 +200,7 @@ export async function POST(req: Request) {
     revalidatePath("/users");
     revalidatePath("/api/users");
 
+    await syncUserToSupabase(newUser);
     await syncDatabaseToCloud();
 
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma, syncDatabaseToCloud, syncDatabaseFromCloud } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
+import { syncDocumentToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request) {
   try {
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
       details: `Uploaded by ${user.fullName}`,
     });
 
+    await syncDocumentToSupabase(doc);
     await syncDatabaseToCloud();
 
     return NextResponse.json(doc, { status: 201 });

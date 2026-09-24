@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, hashPassword, verifyPassword, signToken, TOKEN_COOKIE_NAME } from "@/lib/auth";
 import { prisma, syncDatabaseToCloud } from "@/lib/prisma";
 import { logActivity } from "@/lib/audit";
+import { syncUserToSupabase } from "@/lib/supabaseDbSync";
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
     // Hash new password
     const newHash = await hashPassword(newPassword);
 
-    await prisma.user.update({
+    const updatedDbUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash: newHash,
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
       mustChangePassword: false,
     };
 
+    await syncUserToSupabase(updatedDbUser);
     await syncDatabaseToCloud();
 
     const token = signToken(updatedUser);

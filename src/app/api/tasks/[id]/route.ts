@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
+import { syncTaskToSupabase, deleteTaskFromSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -120,6 +121,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     }
 
+    await syncTaskToSupabase(updatedTask);
     await syncDatabaseToCloud();
 
     return NextResponse.json(updatedTask);
@@ -178,6 +180,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       details: `Task updated by ${user.fullName}`,
     });
 
+    await syncTaskToSupabase(updatedTask);
     await syncDatabaseToCloud();
 
     return NextResponse.json(updatedTask);
@@ -211,6 +214,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       details: `Deleted by ${user.fullName}`,
     });
 
+    await deleteTaskFromSupabase(params.id);
     await syncDatabaseToCloud();
 
     return NextResponse.json({ success: true });

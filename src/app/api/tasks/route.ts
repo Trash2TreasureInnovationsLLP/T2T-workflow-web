@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getRolePermissions } from "@/lib/types";
 import { logActivity } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
+import { syncTaskToSupabase } from "@/lib/supabaseDbSync";
 
 export async function GET(req: Request) {
   try {
@@ -219,6 +220,7 @@ export async function POST(req: Request) {
       });
     }
 
+    await syncTaskToSupabase(newTask);
     await syncDatabaseToCloud();
 
     return NextResponse.json(newTask, { status: 201 });
