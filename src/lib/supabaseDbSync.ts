@@ -199,7 +199,6 @@ export async function syncDocumentToSupabase(doc: any): Promise<void> {
       projectId: doc.projectId || null,
       uploadedById: doc.uploadedById,
       createdAt: doc.createdAt || new Date(),
-      updatedAt: doc.updatedAt || new Date(),
     });
 
     const { error } = await supabaseAdmin.from("Document").upsert(payload, { onConflict: "id" });
@@ -270,5 +269,247 @@ export async function syncAllToSupabasePostgres(): Promise<void> {
     console.log("[SupabasePostgres] Full sync complete");
   } catch (err) {
     console.error("[SupabasePostgres] syncAllToSupabasePostgres error:", err);
+  }
+}
+
+export async function pullFromSupabasePostgres(): Promise<void> {
+  try {
+    const { data: pgUsers, error: uErr } = await supabaseAdmin.from("User").select("*");
+    if (uErr || !pgUsers || pgUsers.length === 0) return;
+
+    const { data: pgDepts } = await supabaseAdmin.from("Department").select("*");
+    const { data: pgProjects } = await supabaseAdmin.from("Project").select("*");
+    const { data: pgSprints } = await supabaseAdmin.from("Sprint").select("*");
+    const { data: pgTasks } = await supabaseAdmin.from("Task").select("*");
+    const { data: pgDocs } = await supabaseAdmin.from("Document").select("*");
+    const { data: pgAnnouncements } = await supabaseAdmin.from("Announcement").select("*");
+
+    // 1. Sync Departments
+    if (pgDepts) {
+      for (const d of pgDepts) {
+        await prisma.department.upsert({
+          where: { id: d.id },
+          create: {
+            id: d.id,
+            name: d.name,
+            code: d.code,
+            description: d.description || "",
+            createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
+          },
+          update: {
+            name: d.name,
+            code: d.code,
+            description: d.description || "",
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // 2. Sync Users
+    const pgUserIds = new Set(pgUsers.map((u) => u.id));
+    for (const u of pgUsers) {
+      await prisma.user.upsert({
+        where: { id: u.id },
+        create: {
+          id: u.id,
+          email: u.email,
+          employeeId: u.employeeId,
+          fullName: u.fullName,
+          passwordHash: u.passwordHash,
+          mustChangePassword: u.mustChangePassword ?? false,
+          role: u.role,
+          departmentId: u.departmentId || null,
+          designation: u.designation,
+          accountStatus: u.accountStatus || "ACTIVE",
+          joiningDate: u.joiningDate ? new Date(u.joiningDate) : new Date(),
+          reportingManagerId: u.reportingManagerId || null,
+          skills: u.skills || "",
+          avatarUrl: u.avatarUrl || null,
+          lastActive: u.lastActive ? new Date(u.lastActive) : new Date(),
+          createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
+          updatedAt: u.updatedAt ? new Date(u.updatedAt) : new Date(),
+        },
+        update: {
+          email: u.email,
+          employeeId: u.employeeId,
+          fullName: u.fullName,
+          role: u.role,
+          departmentId: u.departmentId || null,
+          designation: u.designation,
+          accountStatus: u.accountStatus || "ACTIVE",
+          skills: u.skills || "",
+          avatarUrl: u.avatarUrl || null,
+          mustChangePassword: u.mustChangePassword ?? false,
+        },
+      }).catch(() => {});
+    }
+
+    // Remove local users that are no longer in Supabase Postgres (e.g. deleted)
+    const localUsers = await prisma.user.findMany({ select: { id: true } });
+    for (const lu of localUsers) {
+      if (!pgUserIds.has(lu.id)) {
+        await prisma.user.delete({ where: { id: lu.id } }).catch(() => {});
+      }
+    }
+
+    // 3. Sync Projects
+    if (pgProjects) {
+      for (const p of pgProjects) {
+        await prisma.project.upsert({
+          where: { id: p.id },
+          create: {
+            id: p.id,
+            projectId: p.projectId,
+            name: p.name,
+            description: p.description || "",
+            managerId: p.managerId,
+            startDate: p.startDate ? new Date(p.startDate) : new Date(),
+            targetDate: p.targetDate ? new Date(p.targetDate) : new Date(),
+            priority: p.priority || "MEDIUM",
+            status: p.status || "PLANNING",
+            budget: Number(p.budget) || 0,
+            risks: p.risks || "",
+            blockers: p.blockers || "",
+            progress: Number(p.progress) || 0,
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+            updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+          },
+          update: {
+            name: p.name,
+            description: p.description || "",
+            status: p.status || "PLANNING",
+            priority: p.priority || "MEDIUM",
+            progress: Number(p.progress) || 0,
+            budget: Number(p.budget) || 0,
+            risks: p.risks || "",
+            blockers: p.blockers || "",
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // 4. Sync Sprints
+    if (pgSprints) {
+      for (const s of pgSprints) {
+        await prisma.sprint.upsert({
+          where: { id: s.id },
+          create: {
+            id: s.id,
+            name: s.name,
+            goal: s.goal || "",
+            startDate: s.startDate ? new Date(s.startDate) : new Date(),
+            endDate: s.endDate ? new Date(s.endDate) : new Date(),
+            projectId: s.projectId,
+            status: s.status || "PLANNED",
+            reviewNotes: s.reviewNotes || null,
+            retroNotes: s.retroNotes || null,
+            createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
+            updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+          },
+          update: {
+            name: s.name,
+            goal: s.goal || "",
+            status: s.status || "PLANNED",
+            reviewNotes: s.reviewNotes || null,
+            retroNotes: s.retroNotes || null,
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // 5. Sync Tasks
+    if (pgTasks) {
+      for (const t of pgTasks) {
+        await prisma.task.upsert({
+          where: { id: t.id },
+          create: {
+            id: t.id,
+            taskId: t.taskId,
+            title: t.title,
+            description: t.description || "",
+            projectId: t.projectId,
+            sprintId: t.sprintId || null,
+            assigneeId: t.assigneeId || null,
+            createdById: t.createdById,
+            priority: t.priority || "MEDIUM",
+            status: t.status || "TODO",
+            dueDate: t.dueDate ? new Date(t.dueDate) : null,
+            estimatedEffort: Number(t.estimatedEffort) || 0,
+            actualEffort: Number(t.actualEffort) || 0,
+            storyPoints: Number(t.storyPoints) || 1,
+            tags: t.tags || "",
+            blockers: t.blockers || null,
+            completedAt: t.completedAt ? new Date(t.completedAt) : null,
+            createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+            updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
+          },
+          update: {
+            title: t.title,
+            description: t.description || "",
+            status: t.status || "TODO",
+            priority: t.priority || "MEDIUM",
+            assigneeId: t.assigneeId || null,
+            sprintId: t.sprintId || null,
+            blockers: t.blockers || null,
+            completedAt: t.completedAt ? new Date(t.completedAt) : null,
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // 6. Sync Documents
+    if (pgDocs) {
+      for (const doc of pgDocs) {
+        await prisma.document.upsert({
+          where: { id: doc.id },
+          create: {
+            id: doc.id,
+            title: doc.title,
+            fileName: doc.fileName,
+            fileUrl: doc.fileUrl,
+            fileSize: Number(doc.fileSize) || 102400,
+            fileType: doc.fileType,
+            category: doc.category,
+            projectId: doc.projectId || null,
+            uploadedById: doc.uploadedById,
+            createdAt: doc.createdAt ? new Date(doc.createdAt) : new Date(),
+          },
+          update: {
+            title: doc.title,
+            fileUrl: doc.fileUrl,
+            category: doc.category,
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // 7. Sync Announcements
+    if (pgAnnouncements) {
+      for (const a of pgAnnouncements) {
+        await prisma.announcement.upsert({
+          where: { id: a.id },
+          create: {
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            priority: a.priority,
+            isPinned: Boolean(a.isPinned),
+            targetDepartmentId: a.targetDepartmentId || null,
+            authorId: a.authorId,
+            createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+          },
+          update: {
+            title: a.title,
+            content: a.content,
+            priority: a.priority,
+            isPinned: Boolean(a.isPinned),
+          },
+        }).catch(() => {});
+      }
+    }
+
+    console.log(`[SupabasePostgres] Pulled ${pgUsers.length} users and all records to local database`);
+  } catch (err) {
+    console.error("[SupabasePostgres] pullFromSupabasePostgres error:", err);
   }
 }

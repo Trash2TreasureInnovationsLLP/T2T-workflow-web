@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { supabaseAdmin } from "./supabase";
-import { syncAllToSupabasePostgres } from "./supabaseDbSync";
+import { syncAllToSupabasePostgres, pullFromSupabasePostgres } from "./supabaseDbSync";
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -94,6 +94,9 @@ export async function syncDatabaseFromCloud(force = false): Promise<void> {
           console.log(`[CloudDB] Synced ${buffer.length} bytes from cloud storage`);
         }
       }
+
+      // Always pull any records directly from Supabase Postgres to guarantee 100% parity with Supabase Dashboard
+      await pullFromSupabasePostgres().catch((e) => console.error("[CloudDB] pullFromSupabasePostgres error:", e));
     } catch (err) {
       console.error("[CloudDB] Error downloading database:", err);
     } finally {
